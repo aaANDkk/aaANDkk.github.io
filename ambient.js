@@ -9,12 +9,14 @@
   const colors=['#c0a16d','#c5b08d','#a9ae93','#b89576','#cfbb98'];
   let width=0,height=0,particles=[],frame=0,last=0;
   function measure(){
-    width=window.innerWidth;height=window.innerHeight;
+    const nextWidth=window.innerWidth,nextHeight=window.innerHeight;
+    if(nextWidth===width && nextHeight===height)return;
+    width=nextWidth;height=nextHeight;
     const ratio=Math.min(window.devicePixelRatio||1,1.5,Math.sqrt(2000000/Math.max(1,width*height)));
     canvas.width=Math.round(width*ratio);canvas.height=Math.round(height*ratio);
     ctx.setTransform(ratio,0,0,ratio,0,0);
     const count=Math.max(24,Math.min(90,Math.round(width*height/17000)));
-    particles=Array.from({length:count},(_,i)=>({x:Math.random()*width,y:Math.random()*height,length:14+Math.random()*36,thickness:3+Math.random()*3,speed:9+Math.random()*15,color:colors[i%colors.length],phase:Math.random()*Math.PI*2}));
+    if(!particles.length)particles=Array.from({length:count},(_,i)=>({x:Math.random()*width,y:Math.random()*height,length:14+Math.random()*36,thickness:3+Math.random()*3,speed:9+Math.random()*15,color:colors[i%colors.length],phase:Math.random()*Math.PI*2}));
   }
   function draw(time,delta){
     ctx.clearRect(0,0,width,height);

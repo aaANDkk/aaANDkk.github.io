@@ -64,3 +64,9 @@ body{isolation:isolate}.ambient-canvas{position:fixed;inset:0;width:100%;height:
 
 /* Keep rotated mobile artwork visible and decorative orbits within the stage. */
 @media(max-width:560px){.hero-product .orbit{max-width:100%}}
+/* Allow artwork to breathe without enlarging the mobile scrollable viewport. */
+@media(max-width:560px){
+  .hero{overflow:clip;overflow-clip-margin:32px}
+  .hero-product{contain:layout;overflow-anchor:none}
+  #showcase-selected-name{display:block;width:85%;min-height:1.2em;flex-shrink:0}
+}

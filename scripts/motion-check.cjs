@@ -1,11 +1,11 @@
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),assert=require('node:assert/strict');
-const callbacks=new Map();let next=0,draws=0;
+const callbacks=new Map();let next=0,draws=0,randomCalls=0;
 const ctx={setTransform(){},clearRect(){draws++;},save(){},translate(){},rotate(){},beginPath(){},roundRect(){},fill(){},restore(){}};
 const canvas={setAttribute(){},getContext:()=>ctx};
 const motion={matches:false,addEventListener(type,handler){this.handler=handler;}};
 const document={hidden:false,createElement:()=>canvas,body:{prepend(){}},listeners:{},addEventListener(type,handler){this.listeners[type]=handler;}};
-const window={innerWidth:1280,innerHeight:800,devicePixelRatio:2,matchMedia:()=>motion,addEventListener(){}};
-vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../ambient.js'),'utf8'),{document,window,requestAnimationFrame:fn=>{callbacks.set(++next,fn);return next;},cancelAnimationFrame:id=>callbacks.delete(id)});
+const window={innerWidth:1280,innerHeight:800,devicePixelRatio:2,matchMedia:()=>motion,listeners:{},addEventListener(type,handler){this.listeners[type]=handler;}};
+vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../ambient.js'),'utf8'),{document,window,requestAnimationFrame:fn=>{callbacks.set(++next,fn);return next;},cancelAnimationFrame:id=>callbacks.delete(id),Math:Object.assign(Object.create(Math),{random(){randomCalls++;return .5;}})});
 assert.equal(callbacks.size,1,'visible page animates continuously');
 const [id,tick]=callbacks.entries().next().value;callbacks.delete(id);tick(1000);
 assert.equal(callbacks.size,1);assert.ok(draws>=2);
@@ -13,3 +13,9 @@ document.hidden=true;document.listeners.visibilitychange();assert.equal(callback
 document.hidden=false;motion.matches=true;motion.handler();assert.equal(callbacks.size,0,'reduced motion stays static');
 motion.matches=false;motion.handler();assert.equal(callbacks.size,1,'restoring motion restarts animation');
 console.log('PASS: continuous ambient animation, hidden-tab pause, reduced-motion changes.');
+
+const initialRandomCalls=randomCalls;
+window.innerHeight=700;window.listeners.resize();
+const resizeEntry=[...callbacks.entries()].at(-1);callbacks.delete(resizeEntry[0]);resizeEntry[1]();
+assert.equal(randomCalls,initialRandomCalls,'mobile viewport resize preserves particle positions instead of randomizing the backdrop');
+console.log('PASS: mobile viewport resize preserves the existing particle field.');
