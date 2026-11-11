@@ -39,6 +39,7 @@
     }
     window.addEventListener('scroll',()=>{if(!queued){queued=true;requestAnimationFrame(updateHeader);}},{passive:true});
     window.addEventListener('resize',updateHeader);
+    document.addEventListener('qure-language-changed',updateHeader);
     updateHeader();
   }
   // The highlight moves independently; buttons and the document never move.

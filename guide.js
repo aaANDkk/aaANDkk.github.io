@@ -1,5 +1,6 @@
 'use strict';
 (() => {
+  const qText = (text, ...values) => window.QureI18n ? window.QureI18n.t(text, ...values) : text.replace(/\{(\d+)\}/g, (_, index) => String(values[index] ?? ''));
   const root=document.getElementById('usage');
   if(!root)return;
   const tabs=[...root.querySelectorAll('[role="tab"]')];
@@ -46,6 +47,7 @@
     });
   });
   if(typeof ResizeObserver==='function')new ResizeObserver(placeInk).observe(nav);
+  document.addEventListener('qure-language-changed',placeInk);
   window.addEventListener('resize',placeInk,{passive:true});placeInk();
   if(typeof IntersectionObserver==='function'){
     const observer=new IntersectionObserver(entries=>{
@@ -56,16 +58,16 @@
   }
   root.querySelectorAll('[data-guide-copy]').forEach(button=>{
     let reset=0;
-    const original=button.textContent;
+    const original=button.dataset.i18n || button.textContent;
     button.addEventListener('click',async()=>{
       const content=root.querySelector(`#${button.dataset.guideCopy}`);
       try{
         await navigator.clipboard.writeText(content.textContent);
-        clearTimeout(reset);button.textContent='已复制 ✓';button.classList.add('is-copied');
+        clearTimeout(reset);button.textContent=qText('已复制 ✓');button.classList.add('is-copied');
         if(!reduced() && button.animate)button.animate([{transform:'scale(.96)'},{transform:'scale(1)'}],{duration:260,easing:'cubic-bezier(.22,1,.36,1)'});
-        reset=setTimeout(()=>{button.textContent=original;button.classList.remove('is-copied');},2200);
-        toast('已复制，可粘贴到客户端使用。');
-      }catch{toast('复制失败，请长按或选中下方内容手动复制。');}
+        reset=setTimeout(()=>{button.textContent=qText(original);button.classList.remove('is-copied');},2200);
+        toast(qText('已复制，可粘贴到客户端使用。'));
+      }catch{toast(qText('复制失败，请长按或选中下方内容手动复制。'));}
     });
   });
 })();

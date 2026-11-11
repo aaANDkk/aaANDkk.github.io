@@ -1,5 +1,6 @@
 'use strict';
 (() => {
+  const qText = (text, ...values) => window.QureI18n ? window.QureI18n.t(text, ...values) : text.replace(/\{(\d+)\}/g, (_, index) => String(values[index] ?? ''));
   const el = id => document.getElementById(id);
   const KEY = 'qure-playground-v1';
   const routes = ['Proxy','自动选择','DIRECT','REJECT','香港节点','日本节点','新加坡节点','美国节点'];
@@ -15,9 +16,9 @@
     ['Final','Final','Proxy']
   ].map(([name,icon,route,category]) => ({name,path:iconPath(icon,category),route}));
   function validateDesign(value) {
-    if (!value || value.version !== 1 || !Array.isArray(value.groups) || value.groups.length > 100) throw new Error('需要版本为 1、最多 100 个分组的 Qure 搭配文件。');
+    if (!value || value.version !== 1 || !Array.isArray(value.groups) || value.groups.length > 100) throw new Error(qText('需要版本为 1、最多 100 个分组的 Qure 搭配文件。'));
     const groups = value.groups.map(group => {
-      if (!group || typeof group.name !== 'string' || !group.name.trim() || group.name.length > 48 || typeof group.path !== 'string' || !makeIcon(group.path) || !routes.includes(group.route)) throw new Error('文件包含无效的分组名称、图标路径或预览路由。');
+      if (!group || typeof group.name !== 'string' || !group.name.trim() || group.name.length > 48 || typeof group.path !== 'string' || !makeIcon(group.path) || !routes.includes(group.route)) throw new Error(qText('文件包含无效的分组名称、图标路径或预览路由。'));
       return {name:group.name.trim(),path:group.path,route:group.route};
     });
     return {groups,theme:value.theme === 'dark' ? 'dark' : 'light'};
@@ -29,8 +30,8 @@
   let pendingPath = null;
   const PAGE = 24;
   function save() {
-    try { localStorage.setItem(KEY,JSON.stringify({version:1,...design})); el('studio-save-state').textContent = '已自动保存'; }
-    catch { el('studio-save-state').textContent = '本次会话有效 · 可导出保留'; }
+    try { localStorage.setItem(KEY,JSON.stringify({version:1,...design})); el('studio-save-state').textContent = qText('已自动保存'); }
+    catch { el('studio-save-state').textContent = qText('本次会话有效 · 可导出保留'); }
   }
   function resolveIcon(path) { return state.icons.find(icon => icon.path === path) || makeIcon(path); }
   function iconImage(icon, size) {
@@ -43,13 +44,13 @@
     el('group-count').textContent = String(design.groups.length).padStart(2,'0');
     const fragment = document.createDocumentFragment();
     design.groups.forEach((group,index) => {
-      const row = document.createElement('button'); row.type = 'button'; row.className = `strategy-row${index === selected ? ' active' : ''}`; row.setAttribute('aria-pressed',String(index === selected)); row.setAttribute('aria-label',`编辑 ${group.name}`);
+      const row = document.createElement('button'); row.type = 'button'; row.className = `strategy-row${index === selected ? ' active' : ''}`; row.setAttribute('aria-pressed',String(index === selected)); row.setAttribute('aria-label',qText('编辑 {0}', group.name));
       const image = document.createElement('span'); image.className = 'strategy-image'; image.append(iconImage(resolveIcon(group.path),34));
       const text = document.createElement('span'); text.className = 'strategy-text';
       const name = document.createElement('strong'); name.textContent = group.name;
-      const route = document.createElement('span'); route.textContent = `Select · ${group.route}`;
+      const route = document.createElement('span'); route.textContent = `Select · ${qText(group.route)}`;
       text.append(name,route);
-      const kind = document.createElement('span'); kind.className = 'strategy-kind'; kind.textContent = '选择';
+      const kind = document.createElement('span'); kind.className = 'strategy-kind'; kind.textContent = qText('选择');
       const arrow = document.createElement('span'); arrow.className = 'strategy-arrow'; arrow.textContent = '›'; arrow.setAttribute('aria-hidden','true');
       row.append(image,text,kind,arrow); row.onclick = () => {
         selected = index;
@@ -58,22 +59,22 @@
       };
       fragment.append(row);
     });
-    if (!design.groups.length) { const empty = document.createElement('p'); empty.className = 'studio-no-groups'; empty.textContent = '你的画布已准备好。添加一个策略组，开始试搭。'; fragment.append(empty); }
+    if (!design.groups.length) { const empty = document.createElement('p'); empty.className = 'studio-no-groups'; empty.textContent = qText('你的画布已准备好。添加一个策略组，开始试搭。'); fragment.append(empty); }
     el('group-list').replaceChildren(fragment);
     el('add-group').disabled = design.groups.length >= 100;
   }
   function renderEditor() {
     const group = design.groups[selected];
     el('editor-fields').hidden = !group; el('editor-empty').hidden = Boolean(group);
-    if (!group) { el('editor-title').textContent = '从第一组开始'; return; }
-    el('editor-title').textContent = '编辑策略组';
+    if (!group) { el('editor-title').textContent = qText('从第一组开始'); return; }
+    el('editor-title').textContent = qText('编辑策略组');
     el('group-name').value = group.name; el('group-route').value = group.route;
     el('group-up').disabled = selected <= 0; el('group-down').disabled = selected >= design.groups.length - 1;
     const icon = resolveIcon(group.path);
     const name = document.createElement('span'); name.textContent = icon.name.replace(/_/g,' ');
-    const badge = document.createElement('small'); badge.textContent = state.icons.length && !state.icons.some(item => item.path === group.path) ? '源图标已移除，可重新选择' : (icon.category === 'flag' ? '地区与旗帜' : '品牌与服务');
+    const badge = document.createElement('small'); badge.textContent = state.icons.length && !state.icons.some(item => item.path === group.path) ? qText('源图标已移除，可重新选择') : (icon.category === 'flag' ? qText('地区与旗帜') : qText('品牌与服务'));
     const text = document.createElement('div'); text.append(name,badge);
-    const cue = document.createElement('span'); cue.className = 'chosen-icon-cue'; cue.textContent = '更换图标 ↗';
+    const cue = document.createElement('span'); cue.className = 'chosen-icon-cue'; cue.textContent = qText('更换图标 ↗');
     el('chosen-icon').replaceChildren(iconImage(icon,64),text,cue);
     document.dispatchEvent(new Event('qure-form-updated'));
     renderPicker();
@@ -90,7 +91,7 @@
     const fragment = document.createDocumentFragment();
     icons.slice(page*PAGE,(page+1)*PAGE).forEach(icon => {
       const chosen = (pendingPath || group?.path) === icon.path;
-      const button = document.createElement('button'); button.className = `picker-item${chosen ? ' selected' : ''}`; button.title = icon.label ? `${icon.name} · ${icon.label}` : icon.name; button.setAttribute('aria-label',`选择 ${icon.name}`); button.setAttribute('aria-pressed',String(chosen));
+      const button = document.createElement('button'); button.className = `picker-item${chosen ? ' selected' : ''}`; button.title = icon.label ? `${icon.name} · ${icon.label}` : icon.name; button.setAttribute('aria-label',qText('选择 {0}', icon.name)); button.setAttribute('aria-pressed',String(chosen));
       const name = document.createElement('span'); name.textContent = icon.name.replace(/_/g,' ');
       button.append(iconImage(icon,38),name); button.onclick = () => {
         pendingPath = icon.path;
@@ -99,9 +100,9 @@
       };
       fragment.append(button);
     });
-    if (!icons.length) { const empty = document.createElement('p'); empty.className = 'picker-empty'; empty.textContent = '没有匹配图标，试试其他名称。'; fragment.append(empty); }
+    if (!icons.length) { const empty = document.createElement('p'); empty.className = 'picker-empty'; empty.textContent = qText('没有匹配图标，试试其他名称。'); fragment.append(empty); }
     el('icon-picker').replaceChildren(fragment);
-    el('picker-status').textContent = `${icons.length} 枚 · ${page+1} / ${pages}${!state.icons.length ? ' · 预设图标' : ''}`;
+    el('picker-status').textContent = qText('{0} 枚 · {1} / {2}{3}', icons.length, page+1, pages, !state.icons.length ? qText(' · 预设图标') : '');
     el('picker-prev').disabled = page === 0; el('picker-next').disabled = page >= pages-1;
   }
   function animateEditor() {
@@ -109,7 +110,7 @@
   }
   function renderPending() {
     const icon = pendingPath && resolveIcon(pendingPath);
-    if (!icon) { el('pending-icon').textContent = '选择一枚图标'; el('apply-icon').disabled = true; return; }
+    if (!icon) { el('pending-icon').textContent = qText('选择一枚图标'); el('apply-icon').disabled = true; return; }
     const name = document.createElement('span'); name.textContent = icon.name.replace(/_/g,' ');
     el('pending-icon').replaceChildren(iconImage(icon,32),name);
     el('apply-icon').disabled = false;
@@ -117,13 +118,13 @@
   function openIconPicker() {
     const group = design.groups[selected]; if (!group) return;
     pendingPath = group.path;
-    el('icon-dialog-description').textContent = `正在为 ${group.name} 挑选图标。选好后点击应用，确认这次搭配。`;
+    el('icon-dialog-description').textContent = qText('正在为 {0} 挑选图标。选好后点击应用，确认这次搭配。', group.name);
     renderPicker(); renderPending();
     el('icon-dialog').showModal();
     el('picker-search').focus({preventScroll:true});
   }
   function addGroup() {
-    if (design.groups.length >= 100) { toast('最多可添加 100 个策略组。'); return; }
+    if (design.groups.length >= 100) { toast(qText('最多可添加 100 个策略组。')); return; }
     let number = 1; while (design.groups.some(group => group.name === `New Group ${number}`)) number++;
     design.groups.push({name:`New Group ${number}`,path:iconPath('Proxy'),route:'Proxy'});
     selected = design.groups.length-1; save(); renderGroups(); renderEditor();
@@ -134,7 +135,7 @@
     if (!design.groups[selected]) return;
     design.groups.splice(selected,1); selected = Math.min(selected,design.groups.length-1);
     save(); renderGroups(); renderEditor();
-    toast('策略组已移除。');
+    toast(qText('策略组已移除。'));
   }
   function moveGroup(direction) {
     const next = selected+direction;
@@ -157,7 +158,7 @@
   function exportDesign() {
     const blob = new Blob([JSON.stringify({version:1,...design},null,2)],{type:'application/json'});
     const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'qure-icon-combination.json'; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),10000);
-    toast('搭配文件已导出，包含分组和图标链接路径。');
+    toast(qText('搭配文件已导出，包含分组和图标链接路径。'));
   }
   el('add-group').onclick = el('add-first').onclick = addGroup;
   el('remove-group').onclick = removeGroup;
@@ -176,7 +177,7 @@
   el('close-icon-dialog').onclick = () => el('icon-dialog').close();
   el('apply-icon').onclick = () => {
     if (!pendingPath) return;
-    useIcon(pendingPath); el('icon-dialog').close(); animateEditor(); toast('图标已应用，搭配已自动保存。');
+    useIcon(pendingPath); el('icon-dialog').close(); animateEditor(); toast(qText('图标已应用，搭配已自动保存。'));
   };
   el('icon-dialog').addEventListener('close',()=>{pendingPath=null;});
   el('studio-light').onclick = () => setTheme('light'); el('studio-dark').onclick = () => setTheme('dark');
@@ -184,23 +185,24 @@
   el('import-design').onchange = async event => {
     const file = event.target.files?.[0]; if (!file) return;
     try {
-      if (file.size > 256*1024) throw new Error('搭配文件不能超过 256 KB。');
+      if (file.size > 256*1024) throw new Error(qText('搭配文件不能超过 256 KB。'));
       const imported = validateDesign(JSON.parse(await file.text()));
       // Retain a downloadable backup before replacing an existing design.
       if (design.groups.length) exportDesign();
       design = imported; selected = design.groups.length ? 0 : -1; page = 0;
-      setTheme(design.theme); renderGroups(); renderEditor(); toast('搭配已导入。原搭配已导出备份。');
-    } catch (error) { toast(`导入失败：${error.message}`); }
+      setTheme(design.theme); renderGroups(); renderEditor(); toast(qText('搭配已导入。原搭配已导出备份。'));
+    } catch (error) { toast(qText('导入失败：{0}', error.message)); }
     finally { event.target.value = ''; }
   };
   el('reset-design').onclick = () => el('studio-confirm').showModal();
   el('cancel-reset').onclick = () => el('studio-confirm').close();
-  el('confirm-reset').onclick = () => { design.groups = defaults(); selected = 0; page = 0; save(); renderGroups(); renderEditor(); el('studio-confirm').close(); toast('已恢复预设策略组。'); };
+  el('confirm-reset').onclick = () => { design.groups = defaults(); selected = 0; page = 0; save(); renderGroups(); renderEditor(); el('studio-confirm').close(); toast(qText('已恢复预设策略组。')); };
+  document.addEventListener('qure-language-changed', () => { renderGroups(); renderEditor(); renderPending(); if(el('icon-dialog').open && design.groups[selected]) el('icon-dialog-description').textContent=qText('正在为 {0} 挑选图标。选好后点击应用，确认这次搭配。', design.groups[selected].name); });
   document.addEventListener('qure-icons-updated', () => { renderGroups(); renderEditor(); });
   document.addEventListener('qure-try-icon', event => {
     useIcon(event.detail);
     el('playground').scrollIntoView({behavior:reducedMotion() ? 'instant' : 'smooth',block:'start'});
-    toast(`已应用到 ${design.groups[selected].name}，可在此更换目标分组。`);
+    toast(qText('已应用到 {0}，可在此更换目标分组。', design.groups[selected].name));
   });
   setTheme(design.theme); renderGroups(); renderEditor();
 })();

@@ -1,4 +1,5 @@
 'use strict';
+  const qText = (text, ...values) => window.QureI18n ? window.QureI18n.t(text, ...values) : text.replace(/\{(\d+)\}/g, (_, index) => String(values[index] ?? ''));
 
 // SVGs always come from the source repository, never a bundled snapshot.
 const REPO = 'aaANDkk/Qure_Style_SVG';
@@ -27,15 +28,15 @@ function makeIcon(path, revision = '') {
 }
 async function request(url) {
   const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(18000) });
-  if (!response.ok) throw new Error(response.status === 403 || response.status === 429 ? '请求频率受限，请稍后重试。' : `图标源返回 ${response.status}。`);
+  if (!response.ok) throw new Error(response.status === 403 || response.status === 429 ? qText('请求频率受限，请稍后重试。') : qText('图标源返回 {0}。', response.status));
   return response.json();
 }
 async function getIcons() {
   try {
     const tree = await request(`https://api.github.com/repos/${REPO}/git/trees/${BRANCH}?recursive=1`);
-    if (tree.truncated || !Array.isArray(tree.tree)) throw new Error('图标目录不完整。');
+    if (tree.truncated || !Array.isArray(tree.tree)) throw new Error(qText('图标目录不完整。'));
     const icons = tree.tree.filter(x => x.type === 'blob').map(x => makeIcon(x.path, x.sha)).filter(Boolean);
-    if (!icons.length) throw new Error('图标目录为空。');
+    if (!icons.length) throw new Error(qText('图标目录为空。'));
     return { icons, fallback: false };
   } catch (error) {
     // The public subscription manifest avoids GitHub API rate limits.
@@ -47,7 +48,7 @@ async function getIcons() {
       try { return makeIcon(decodeURIComponent(item.url.slice(RAW.length).split('?')[0]), stamp); }
       catch { return null; }
     }).filter(Boolean);
-    if (!icons.length) throw new Error('订阅清单中没有有效图标。');
+    if (!icons.length) throw new Error(qText('订阅清单中没有有效图标。'));
     return { icons, fallback: true };
   }
 }
@@ -56,9 +57,9 @@ async function sync(manual = false) {
   state.busy = true;
   $('refresh').disabled = true;
   $('retry').disabled = true;
-  $('sync-label').textContent = '正在同步…';
+  $('sync-label').textContent = qText('正在同步…');
   if (!state.icons.length) {
-    $('status').textContent = '正在获取最新图标…';
+    $('status').textContent = qText('正在获取最新图标…');
     $('grid').replaceChildren(...Array.from({length: 21}, () => { const item = document.createElement('div'); item.className = 'skeleton'; return item; }));
   }
   $('grid').setAttribute('aria-busy', 'true');
@@ -68,7 +69,7 @@ async function sync(manual = false) {
     state.synced = Date.now();
     $('error').hidden = true;
     $('all-count').textContent = state.icons.length.toLocaleString();
-    $('sync-label').textContent = result.fallback ? '订阅清单 · 备用连接' : `已同步 ${new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'})}`;
+    $('sync-label').textContent = result.fallback ? qText('订阅清单 · 备用连接') : qText('已同步 {0}', new Date().toLocaleTimeString(window.QureI18n?.language === 'en' ? 'en-GB' : 'zh-CN', {hour:'2-digit',minute:'2-digit'}));
     render();
     refreshFeatured();
     document.dispatchEvent(new Event('qure-icons-updated'));
@@ -77,13 +78,13 @@ async function sync(manual = false) {
       const updated = state.icons.find(icon => icon.path === state.current.path);
       if (updated) { state.current = updated; $('preview-image').src = updated.image; }
     }
-    if (manual) toast(result.fallback ? '已从订阅清单刷新；新增图标以清单更新为准。' : '已经是图标库的最新版本。');
+    if (manual) toast(result.fallback ? qText('已从订阅清单刷新；新增图标以清单更新为准。') : qText('已经是图标库的最新版本。'));
   } catch (error) {
     $('error').hidden = false;
-    $('error-message').textContent = `请检查到 GitHub 和原始素材服务器的网络连接。${error.message || '连接超时。'}`;
-    $('sync-label').textContent = '连接未完成';
-    if (state.icons.length) { render(); $('status').textContent += ' · 更新失败，保留本次已加载列表'; }
-    else { $('grid').replaceChildren(); $('status').textContent = '未加载图标'; }
+    $('error-message').textContent = qText('请检查到 GitHub 和原始素材服务器的网络连接。{0}', error.message || qText('连接超时。'));
+    $('sync-label').textContent = qText('连接未完成');
+    if (state.icons.length) { render(); $('status').textContent += qText(' · 更新失败，保留本次已加载列表'); }
+    else { $('grid').replaceChildren(); $('status').textContent = qText('未加载图标'); }
   } finally {
     state.busy = false;
     $('grid').setAttribute('aria-busy', 'false');
@@ -103,7 +104,7 @@ async function loadLabels() {
   if (labelsLoaded) return;
   const results = await Promise.allSettled(['common', 'flag'].map(async category => {
     const response = await fetch(`${RAW}icon/svg/${category}/README.md`, {cache:'no-cache', signal:AbortSignal.timeout(12000)});
-    if (!response.ok) throw new Error('名称索引不可用');
+    if (!response.ok) throw new Error(qText('名称索引不可用'));
     const text = await response.text();
     const labels = new Map();
     for (const match of text.matchAll(/<img\s+src="([^"\n]+\.svg)"[^>]*\salt="([^"\n]+)"/g)) {
@@ -127,9 +128,9 @@ function render() {
   for (const [index, icon] of icons.slice(0, state.limit).entries()) {
     const card = document.createElement('article'); card.className = 'icon-card'; card.style.animationDelay = `${Math.min(index % PAGE_SIZE, 20) * 16}ms`;
     if (!animate) card.style.animation = 'none';
-    const open = document.createElement('button'); open.className = 'icon-open'; open.type = 'button'; open.setAttribute('aria-label', `放大查看 ${icon.label || icon.name}`);
+    const open = document.createElement('button'); open.className = 'icon-open'; open.type = 'button'; open.setAttribute('aria-label', qText('放大查看 {0}', icon.name));
     const img = document.createElement('img'); img.src = icon.image; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.width = 57; img.height = 57;
-    img.onerror = () => { const failed = document.createElement('span'); failed.className = 'image-failed'; failed.textContent = '加载失败'; img.replaceWith(failed); };
+    img.onerror = () => { const failed = document.createElement('span'); failed.className = 'image-failed'; failed.textContent = qText('加载失败'); img.replaceWith(failed); };
     const name = document.createElement('span'); name.className = 'icon-name'; name.textContent = icon.name.replace(/_/g,' '); name.title = icon.label ? `${icon.label} · ${icon.name}` : icon.name;
     open.append(img, name); open.onclick = () => showPreview(icon);
     card.append(open); fragment.append(card);
@@ -137,9 +138,9 @@ function render() {
   $('grid').replaceChildren(fragment);
   $('empty').hidden = Boolean(icons.length) || !state.icons.length;
   $('more').hidden = icons.length <= state.limit;
-  $('status').textContent = `找到 ${icons.length.toLocaleString()} 枚图标${icons.length > state.limit ? ` · 已展示 ${state.limit} 枚` : ''}`;
-    $('empty').querySelector('h3').textContent = '还没有找到这枚图标';
-    $('empty').querySelector('p').textContent = '试试其他名称，或切换分类。';
+  $('status').textContent = qText('找到 {0} 枚图标{1}', icons.length.toLocaleString(), icons.length > state.limit ? qText(' · 已展示 {0} 枚', state.limit) : '');
+    $('empty').querySelector('h3').textContent = qText('还没有找到这枚图标');
+    $('empty').querySelector('p').textContent = qText('试试其他名称，或切换分类。');
 }
 function refreshFeatured() {
   document.querySelectorAll('[data-feature]').forEach(img => {
@@ -152,7 +153,7 @@ function showPreview(icon) {
   view.pointers.clear();
   state.current = icon;
   $('preview-title').textContent = icon.name.replace(/_/g,' ');
-  $('preview-category').textContent = icon.category === 'flag' ? 'REGIONS & FLAGS / 地区与旗帜' : 'BRANDS & SERVICES / 品牌与服务';
+  $('preview-category').textContent = icon.category === 'flag' ? qText('REGIONS & FLAGS / 地区与旗帜') : qText('BRANDS & SERVICES / 品牌与服务');
   $('preview-path').textContent = icon.path;
   $('preview-image').alt = icon.label || icon.name;
   $('preview-image').hidden = false;
@@ -162,7 +163,7 @@ function showPreview(icon) {
   resetView();
   const list = filtered();
   const index = list.findIndex(item => item.path === icon.path);
-  $('preview-position').textContent = index < 0 ? '精选图标' : `${index + 1} / ${list.length}`;
+  $('preview-position').textContent = index < 0 ? qText('精选图标') : `${index + 1} / ${list.length}`;
   $('previous').disabled = $('next').disabled = list.length < 2;
   if (typeof $('preview-image').animate === 'function' && !reducedMotion()) $('preview-image').animate([{opacity:0},{opacity:1}],{duration:240});
   if (!$('preview').open) $('preview').showModal();
@@ -235,22 +236,22 @@ function installCanvas() {
 }
 async function copyText(value, success) {
   try { await navigator.clipboard.writeText(value); toast(success); }
-  catch { toast('浏览器未允许复制，请检查剪贴板权限。'); }
+  catch { toast(qText('浏览器未允许复制，请检查剪贴板权限。')); }
 }
 async function copySvg() {
   if (!state.current) return;
   $('copy-svg').disabled = true;
   try {
     const response = await fetch(state.current.image,{signal:AbortSignal.timeout(18000)});
-    if (!response.ok) throw new Error('下载失败');
-    await copyText(await response.text(),'SVG 源码已复制。');
-  } catch { toast('源码获取失败，请检查网络后重试。'); }
+    if (!response.ok) throw new Error(qText('下载失败'));
+    await copyText(await response.text(),qText('SVG 源码已复制。'));
+  } catch { toast(qText('源码获取失败，请检查网络后重试。')); }
   finally { $('copy-svg').disabled = false; }
 }
 async function copyLink() {
   if (!state.current) return;
-  try { await navigator.clipboard.writeText(state.current.url); toast('链接已复制，可直接用于配置文件。'); }
-  catch { toast('浏览器未允许复制，请手动复制下面的链接。'); $('preview-path').textContent = state.current.url; const range = document.createRange(); range.selectNodeContents($('preview-path')); const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range); }
+  try { await navigator.clipboard.writeText(state.current.url); toast(qText('链接已复制，可直接用于配置文件。')); }
+  catch { toast(qText('浏览器未允许复制，请手动复制下面的链接。')); $('preview-path').textContent = state.current.url; const range = document.createRange(); range.selectNodeContents($('preview-path')); const selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(range); }
 }
 async function download() {
   if (!state.current) return;
@@ -258,11 +259,11 @@ async function download() {
   $('download').disabled = true;
   try {
     const response = await fetch(icon.image, {signal:AbortSignal.timeout(18000)});
-    if (!response.ok) throw new Error('下载失败');
+    if (!response.ok) throw new Error(qText('下载失败'));
     const blob = new Blob([await response.text()], {type:'image/svg+xml'});
     const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `${icon.name}.svg`; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 10000);
-    toast('SVG 已准备下载。');
-  } catch { toast('下载失败，请检查网络后重试。'); }
+    toast(qText('SVG 已准备下载。'));
+  } catch { toast(qText('下载失败，请检查网络后重试。')); }
   finally { $('download').disabled = false; }
 }
 function changeCategory(category) {
@@ -305,7 +306,7 @@ $('previous').onclick = () => stepPreview(-1);
 $('next').onclick = () => stepPreview(1);
 $('reset-view').onclick = resetView;
 $('copy-svg').onclick = copySvg;
-$('copy-config').onclick = () => { if (state.current) copyText(`icon: "${state.current.url}"`, '配置片段已复制，可粘贴到策略组配置。'); };
+$('copy-config').onclick = () => { if (state.current) copyText(`icon: "${state.current.url}"`, qText('配置片段已复制，可粘贴到策略组配置。')); };
 installCanvas();
 document.addEventListener('keydown', event => {
   if (!$('preview').open || /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) || event.ctrlKey || event.metaKey || event.altKey) return;
@@ -338,8 +339,14 @@ document.querySelectorAll('.hero-art').forEach(art => {
 });
 document.querySelectorAll('[data-feature]').forEach(img => {
   const tile = img.parentElement;
-  tile.setAttribute('role','button'); tile.setAttribute('tabindex','0'); tile.setAttribute('aria-label',`预览 ${img.alt}`);
-  const open = () => { const icon = state.icons.find(item => item.name.toLowerCase() === img.dataset.feature.toLowerCase() && item.category === (img.dataset.group || 'common')); if (icon) showPreview(icon); else toast('图标库正在连接，请稍后再试。'); };
+  tile.setAttribute('role','button'); tile.setAttribute('tabindex','0'); tile.setAttribute('aria-label',qText('预览 {0}', img.alt));
+  const open = () => { const icon = state.icons.find(item => item.name.toLowerCase() === img.dataset.feature.toLowerCase() && item.category === (img.dataset.group || 'common')); if (icon) showPreview(icon); else toast(qText('图标库正在连接，请稍后再试。')); };
   tile.onclick = open;
   tile.addEventListener('keydown',event=>{if(event.key === 'Enter' || event.key === ' '){event.preventDefault();open();}});
+});
+
+document.addEventListener('qure-language-changed', () => {
+  if (state.icons.length) render();
+  if (state.current) $('preview-category').textContent = qText(state.current.category === 'flag' ? 'REGIONS & FLAGS / 地区与旗帜' : 'BRANDS & SERVICES / 品牌与服务');
+  document.querySelectorAll('[data-feature]').forEach(img => { const tile=img.closest('[role=\"button\"]'); if(tile) tile.setAttribute('aria-label',qText('预览 {0}', img.alt)); });
 });

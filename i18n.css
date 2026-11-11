@@ -1,0 +1,31 @@
+/* Compact language control, matching the warm paper navigation. */
+.language-toggle{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;min-width:39px;height:38px;margin-left:5px;padding:0 8px;border:1px solid #d9ccb5;border-radius:9px;background:transparent;color:#7a6248;font:11px/1 'Segoe UI',sans-serif;transition:background .2s,color .2s,border-color .2s}
+.language-toggle:hover{background:#e9dfcc;border-color:#c8b18d;color:#493d30}
+html[lang='en'] .hero h1{font-size:clamp(48px,5.8vw,82px);letter-spacing:-3px;line-height:1.12}
+html[lang='en'] .hero h1 em{letter-spacing:-3px}
+html[lang='en'] .guide-panel h3{font-size:26px}
+html[lang='en'] .guide-nav button strong{font-size:12px}
+html[lang='en'] .studio-actions{gap:8px}
+html[lang='en'] .studio-actions .quiet-button{font-size:9px}
+@media(max-width:800px){.topbar .brand-note{display:none}html[lang='en'] .topbar nav>a:not(.nav-github){padding-inline:9px}}
+@media(max-width:560px){
+ .language-toggle{min-width:32px;height:34px;margin-left:2px;padding:0 5px;font-size:10px}
+ .topbar nav{gap:1px}.topbar nav>a:not(.nav-github){padding-inline:6px}
+ html[lang='en'] .topbar nav>a:not(.nav-github){padding-inline:6px;font-size:10px}
+ html[lang='en'] .hero h1{font-size:clamp(43px,12.5vw,67px);letter-spacing:-2px}
+ html[lang='en'] .hero h1 em{letter-spacing:-2px}
+ html[lang='en'] .guide-panel h3{font-size:23px}
+ html[lang='en'] .guide-nav button strong{font-size:10px}
+ html[lang='en'] .guide-nav button{gap:4px}
+ html[lang='en'] .showcase-note{font-size:6px}
+ html[lang='en'] .hero-actions{gap:16px}
+ html[lang='en'] .closing h2{font-size:20px}
+ html[lang='en'] .closing p{overflow-wrap:anywhere}
+}
+@media(max-width:360px){
+ .topbar nav>a:not(.nav-github),html[lang='en'] .topbar nav>a:not(.nav-github){padding-inline:4px;font-size:9px}
+ .topbar .nav-github{width:30px;margin-left:1px}.language-toggle{min-width:28px;margin-left:1px;padding-inline:3px}
+ .topbar .brand-word{font-size:23px}.topbar .brand>img{width:20px}
+ html[lang='en'] .guide-nav button>span:first-child{display:none}
+}
+@media(prefers-reduced-motion:reduce){.language-toggle{transition:none}}

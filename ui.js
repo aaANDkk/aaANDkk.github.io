@@ -1,5 +1,6 @@
 'use strict';
 (() => {
+  const qText = (text, ...values) => window.QureI18n ? window.QureI18n.t(text, ...values) : text.replace(/\{(\d+)\}/g, (_, index) => String(values[index] ?? ''));
   const enhanced = [];
   let opened = null;
   const names = {sort:'排序方式','group-route':'预览路由','picker-category':'图标分类'};
@@ -18,7 +19,7 @@
     const chevron = document.createElementNS('http://www.w3.org/2000/svg','svg'); chevron.setAttribute('viewBox','0 0 20 20'); chevron.setAttribute('aria-hidden','true');
     const path = document.createElementNS('http://www.w3.org/2000/svg','path'); path.setAttribute('d','m6 8 4 4 4-4'); chevron.append(path);
     trigger.append(value,chevron);
-    const panel = document.createElement('div'); panel.id = `${select.id}-options`; panel.className = 'select-menu'; panel.setAttribute('role','listbox'); panel.setAttribute('aria-label',names[select.id] || '选择选项'); panel.hidden = true;
+    const panel = document.createElement('div'); panel.id = `${select.id}-options`; panel.className = 'select-menu'; panel.setAttribute('role','listbox'); panel.setAttribute('aria-label',qText(names[select.id] || '选择选项')); panel.hidden = true;
     const scroller = document.createElement('div'); scroller.className='select-menu-scroll'; panel.append(scroller);
     trigger.setAttribute('aria-controls',panel.id);
     const items = [...select.options].map((option,index) => {
@@ -37,11 +38,12 @@
       }
     }
     function refresh() {
+      panel.setAttribute('aria-label',qText(names[select.id] || '选择选项'));
       const index = Math.max(0,select.selectedIndex);
       value.textContent = select.options[index]?.textContent || '';
-      trigger.setAttribute('aria-label',`${names[select.id] || '选项'}：${value.textContent}`);
+      trigger.setAttribute('aria-label',`${qText(names[select.id] || '选项')}：${value.textContent}`);
       trigger.disabled = select.disabled;
-      items.forEach((item,i)=>{item.setAttribute('aria-selected',String(i===index));item.classList.toggle('selected',i===index);});
+      items.forEach((item,i)=>{item.textContent=select.options[i].textContent;item.setAttribute('aria-selected',String(i===index));item.classList.toggle('selected',i===index);});
     }
     function openMenu(last = false) {
       if (opened === control) { closeMenu(); return; }
@@ -80,6 +82,7 @@
   });
   document.addEventListener('pointerdown',event=>{if(opened && !opened.wrapper.contains(event.target))closeMenu();});
   document.addEventListener('qure-form-updated',()=>enhanced.forEach(refresh=>refresh()));
+  document.addEventListener('qure-language-changed',()=>{closeMenu();enhanced.forEach(refresh=>refresh());});
   window.addEventListener('resize',()=>closeMenu());
   document.querySelectorAll('dialog').forEach(dialog=>{
     dialog.addEventListener('close',()=>closeMenu());

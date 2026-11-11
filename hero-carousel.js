@@ -1,5 +1,6 @@
 'use strict';
 (() => {
+  const qText = (text, ...values) => window.QureI18n ? window.QureI18n.t(text, ...values) : text.replace(/\{(\d+)\}/g, (_, index) => String(values[index] ?? ''));
   const image=document.getElementById('showcase-selected-icon');
   const label=document.getElementById('showcase-selected-name');
   const hero=document.querySelector('.hero-art');
@@ -32,7 +33,7 @@
     image.dataset.group='common';
     image.src=record.url;image.alt=record.name;
     label.textContent=record.name;
-    image.parentElement.setAttribute('aria-label',`预览 ${record.name}`);
+    image.parentElement.setAttribute('aria-label',qText('预览 {0}', record.name));
     if(animate && !reduced.matches && typeof image.animate==='function')image.animate([{opacity:.55,scale:.97},{opacity:1,scale:1}],{duration:220,easing:'cubic-bezier(.2,.8,.2,1)'});
   }
   function advance(){
