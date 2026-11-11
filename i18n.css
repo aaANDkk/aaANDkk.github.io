@@ -6,7 +6,7 @@ html[lang='en'] .hero h1 em{letter-spacing:-3px}
 html[lang='en'] .guide-panel h3{font-size:26px}
 html[lang='en'] .guide-nav button strong{font-size:12px}
 html[lang='en'] .studio-actions{gap:8px}
-html[lang='en'] .studio-actions .quiet-button{font-size:9px}
+
 @media(max-width:800px){.topbar .brand-note{display:none}html[lang='en'] .topbar nav>a:not(.nav-github){padding-inline:9px}}
 @media(max-width:560px){
  .language-toggle{min-width:32px;height:34px;margin-left:2px;padding:0 5px;font-size:10px}

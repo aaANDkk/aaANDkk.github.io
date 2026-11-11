@@ -16,9 +16,9 @@
     ['Final','Final','Proxy']
   ].map(([name,icon,route,category]) => ({name,path:iconPath(icon,category),route}));
   function validateDesign(value) {
-    if (!value || value.version !== 1 || !Array.isArray(value.groups) || value.groups.length > 100) throw new Error(qText('需要版本为 1、最多 100 个分组的 Qure 搭配文件。'));
+    if (!value || value.version !== 1 || !Array.isArray(value.groups) || value.groups.length > 100) throw new Error(qText('本机保存的搭配格式无效。'));
     const groups = value.groups.map(group => {
-      if (!group || typeof group.name !== 'string' || !group.name.trim() || group.name.length > 48 || typeof group.path !== 'string' || !makeIcon(group.path) || !routes.includes(group.route)) throw new Error(qText('文件包含无效的分组名称、图标路径或预览路由。'));
+      if (!group || typeof group.name !== 'string' || !group.name.trim() || group.name.length > 48 || typeof group.path !== 'string' || !makeIcon(group.path) || !routes.includes(group.route)) throw new Error(qText('本机保存的分组名称、图标路径或预览路由无效。'));
       return {name:group.name.trim(),path:group.path,route:group.route};
     });
     return {groups,theme:value.theme === 'dark' ? 'dark' : 'light'};
@@ -31,7 +31,7 @@
   const PAGE = 24;
   function save() {
     try { localStorage.setItem(KEY,JSON.stringify({version:1,...design})); el('studio-save-state').textContent = qText('已自动保存'); }
-    catch { el('studio-save-state').textContent = qText('本次会话有效 · 可导出保留'); }
+    catch { el('studio-save-state').textContent = qText('本次会话有效 · 无法保存到本机'); }
   }
   function resolveIcon(path) { return state.icons.find(icon => icon.path === path) || makeIcon(path); }
   function iconImage(icon, size) {
@@ -155,11 +155,6 @@
     el('studio-dark').setAttribute('aria-pressed',String(theme === 'dark'));
     save();
   }
-  function exportDesign() {
-    const blob = new Blob([JSON.stringify({version:1,...design},null,2)],{type:'application/json'});
-    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'qure-icon-combination.json'; document.body.append(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),10000);
-    toast(qText('搭配文件已导出，包含分组和图标链接路径。'));
-  }
   el('add-group').onclick = el('add-first').onclick = addGroup;
   el('remove-group').onclick = removeGroup;
   el('group-up').onclick = () => moveGroup(-1); el('group-down').onclick = () => moveGroup(1);
@@ -181,19 +176,6 @@
   };
   el('icon-dialog').addEventListener('close',()=>{pendingPath=null;});
   el('studio-light').onclick = () => setTheme('light'); el('studio-dark').onclick = () => setTheme('dark');
-  el('export-design').onclick = exportDesign;
-  el('import-design').onchange = async event => {
-    const file = event.target.files?.[0]; if (!file) return;
-    try {
-      if (file.size > 256*1024) throw new Error(qText('搭配文件不能超过 256 KB。'));
-      const imported = validateDesign(JSON.parse(await file.text()));
-      // Retain a downloadable backup before replacing an existing design.
-      if (design.groups.length) exportDesign();
-      design = imported; selected = design.groups.length ? 0 : -1; page = 0;
-      setTheme(design.theme); renderGroups(); renderEditor(); toast(qText('搭配已导入。原搭配已导出备份。'));
-    } catch (error) { toast(qText('导入失败：{0}', error.message)); }
-    finally { event.target.value = ''; }
-  };
   el('reset-design').onclick = () => el('studio-confirm').showModal();
   el('cancel-reset').onclick = () => el('studio-confirm').close();
   el('confirm-reset').onclick = () => { design.groups = defaults(); selected = 0; page = 0; save(); renderGroups(); renderEditor(); el('studio-confirm').close(); toast(qText('已恢复预设策略组。')); };
