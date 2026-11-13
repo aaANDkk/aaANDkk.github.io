@@ -22,7 +22,6 @@
   "为你的工作流，找到合适的表达。": "Find the right expression for your workflow.",
   "精心绘制 · 统一风格": "Thoughtfully drawn · One visual language",
   "浏览图标库 ↗": "Browse icons ↗",
-  "你的下一套图标搭配，从这里开始。": "Your next icon setup starts here.",
   "英国国旗": "United Kingdom flag",
   "图标集特点": "About the collection",
   "清晰，不止一种尺寸。": "Clarity at every size.",
