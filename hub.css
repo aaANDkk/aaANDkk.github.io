@@ -81,7 +81,9 @@ html[data-theme='dark'] {
   .ctrl-btn,
   .bento-card,
   .card-icon-wrap,
+  .mini-dock,
   .mini-tile,
+  .slot-preview,
   .card-cta,
   .card-secondary,
   .route-chip,
@@ -448,7 +450,6 @@ html[data-theme='dark'] .icon-moon {
   backdrop-filter: blur(18px) saturate(135%);
   box-shadow: var(--shadow-card);
   overflow: hidden;
-  transform-style: preserve-3d;
   transition:
     transform 0.45s var(--spring),
     border-color 0.25s ease,
@@ -472,7 +473,7 @@ html[data-theme='dark'] .icon-moon {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: inherit;
+  border-radius: 0;
   background: radial-gradient(360px circle at var(--mx) var(--my), var(--spotlight), transparent 65%);
   opacity: 0;
   pointer-events: none;
