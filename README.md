@@ -1,12 +1,13 @@
-# Qure Gallery
+# aaANDkk Site Portal & Qure Gallery
 
-小图标，大不同。
+[站点入口](https://aaANDkk.github.io/) · [Qure 官网](https://aaANDkk.github.io/qure/) · [图标仓库](https://github.com/aaANDkk/Qure_Style_SVG)
 
-Qure 风格 SVG 图标的在线展示与搭配工具。浏览图标、放大查看细节，或在 Clash 风格的策略组界面里试搭，再复制链接用于自己的配置。
+## 目录结构
 
-[在线体验](https://aaANDkk.github.io/) · [图标仓库](https://github.com/aaANDkk/Qure_Style_SVG)
+- `/`（[index.html](index.html)、[hub.css](hub.css)、[hub.js](hub.js)）：个人项目总入口，可在 `hub.js` 的 `PROJECTS` 数组中轻松新增子项目入口卡片。
+- `/qure/`（[qure/index.html](qure/index.html)）：Qure 风格 SVG 图标的在线展示与搭配工具。
 
-## 功能
+## Qure Gallery 功能
 
 - **图标库**：按名称搜索、分类筛选与排序，支持中文索引。
 - **细节预览**：拖动平移、滚轮或双指缩放，可切换纸色、白色、深色与透明网格背景。
@@ -44,10 +45,11 @@ python -m http.server 4173 --bind 127.0.0.1
 安装 Node.js 后运行：
 
 ```powershell
-node scripts/check.cjs
-node scripts/ui-check.cjs
-node scripts/carousel-check.cjs
-node scripts/motion-check.cjs
+node qure/scripts/check.cjs
+node qure/scripts/ui-check.cjs
+node qure/scripts/carousel-check.cjs
+node qure/scripts/motion-check.cjs
+node qure/scripts/i18n-check.cjs
 ```
 
 ## 许可与素材说明
