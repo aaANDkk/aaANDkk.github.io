@@ -14,16 +14,16 @@
       route: '/qure',
       icon: `${RAW_ICON}Qure.svg`,
       status: { zh: '已上线', en: 'Live' },
-      title: { zh: 'Qure 图标展示馆', en: 'Qure Icon Gallery' },
+      title: { zh: 'Qure 图标预览站', en: 'Qure Icon Showcase' },
       desc: {
-        zh: 'Qure 风格 SVG 矢量图标官网。支持名称检索、细节放大预览、直链复制与 Clash 策略组搭配实验室。',
-        en: 'Official showcase for Qure-style SVG icons. Search, inspect details, copy direct links, and preview Clash policy groups.'
+        zh: 'Qure 风格 SVG 矢量图标的在线预览网站。支持名称检索、细节放大查看、直链复制与 Clash 策略组试搭。',
+        en: 'Online preview site for Qure-style SVG icons. Search, inspect details, copy direct links, and preview Clash policy groups.'
       },
       tags: {
         zh: ['SVG 图标库', 'Clash 试搭', '在线同步'],
         en: ['SVG Library', 'Clash Studio', 'Live Sync']
       },
-      cta: { zh: '进入官网', en: 'Open Site' },
+      cta: { zh: '进入预览', en: 'Open Preview' },
       repoUrl: 'https://github.com/aaANDkk/Qure_Style_SVG',
       repoLabel: { zh: '图标仓库', en: 'Icon Repo' },
       previewIcons: [
@@ -38,16 +38,16 @@
       upcoming: true,
       href: 'https://github.com/aaANDkk',
       external: true,
-      route: '/next-project',
-      status: { zh: '预留入口', en: 'Slot Ready' },
-      title: { zh: '更多项目即将上线', en: 'More Projects Coming' },
+      route: '/soon',
+      status: { zh: '敬请期待', en: 'Coming Soon' },
+      title: { zh: '更多创意即将上线', en: 'More Creations Coming' },
       desc: {
-        zh: '后续新项目将各自存放在独立子目录中，彼此样式与脚本完全隔离，互不干扰维护。',
-        en: 'Future web tools and experiments will live in isolated sub-folders here for clean, independent maintenance.'
+        zh: '新的网页工具与小实验正在打磨中，准备好后会第一时间出现在这里。',
+        en: 'New web tools and interactive experiments are on the way and will appear right here once ready.'
       },
       tags: {
-        zh: ['独立目录', '持续更新'],
-        en: ['Modular Paths', 'In Progress']
+        zh: ['创意实验', '持续更新'],
+        en: ['Experiments', 'In Progress']
       },
       cta: { zh: '前往 GitHub 主页', en: 'Visit GitHub' }
     }
@@ -57,22 +57,22 @@
     zh: {
       pageTitle: 'aaANDkk · 站点入口',
       brandSub: 'PROJECT PORTAL',
-      pillTag: '目录索引',
-      heroTitleStart: '选择你要前往的',
-      heroTitleAccent: '独立站点。',
-      heroDesc: '每个项目都在独立的子路径下运行与维护。挑选一张卡片，即刻进入。',
-      footText: '基于独立子目录结构部署，方便按项目持续迭代。',
+      pillTag: '作品索引',
+      heroTitleStart: '挑选一个站点，',
+      heroTitleAccent: '开始体验。',
+      heroDesc: '这里收录了持续更新的个人网页作品与实用工具，点击下方卡片即可进入。',
+      footText: '© aaANDkk · 用心打磨每一个小细节',
       langButton: 'EN',
       langAria: 'Switch to English'
     },
     en: {
       pageTitle: 'aaANDkk · Project Portal',
       brandSub: 'PROJECT PORTAL',
-      pillTag: 'INDEX',
-      heroTitleStart: 'Choose a destination ',
+      pillTag: 'DIRECTORY',
+      heroTitleStart: 'Pick a project ',
       heroTitleAccent: 'to explore.',
-      heroDesc: 'Each website lives in its own sub-path for clean separation and effortless maintenance.',
-      footText: 'Organized by sub-directories for independent project maintenance.',
+      heroDesc: 'A curated collection of personal web tools and showcases. Choose a card below to jump in.',
+      footText: '© aaANDkk · Crafted with care',
       langButton: '中',
       langAria: '切换到中文'
     }

@@ -1,6 +1,6 @@
 # aaANDkk Site Portal & Qure Gallery
 
-[站点入口](https://aaANDkk.github.io/) · [Qure 官网](https://aaANDkk.github.io/qure/) · [图标仓库](https://github.com/aaANDkk/Qure_Style_SVG)
+[站点入口](https://aaANDkk.github.io/) · [Qure 图标预览站](https://aaANDkk.github.io/qure/) · [图标仓库](https://github.com/aaANDkk/Qure_Style_SVG)
 
 ## 目录结构
 
