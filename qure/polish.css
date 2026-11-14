@@ -1196,6 +1196,9 @@ html[lang='en'] .hero h1 em {
 }
 
 /* ---------- Usage Guide: Squircle Paper & Stretching Ink ---------- */
+.usage-guide {
+  scroll-margin-top: 0;
+}
 .guide-layout {
   border-radius: var(--r-xl);
   border-color: rgb(196 178 146 / 0.42);
@@ -1780,7 +1783,7 @@ dialog::backdrop {
   }
 
   .usage-guide {
-    scroll-margin-top: 108px;
+    scroll-margin-top: 0;
   }
 }
 

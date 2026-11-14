@@ -22,6 +22,8 @@
 
     let lastInkTarget = undefined;
     let lastScrolled = null;
+    let navLockTarget = null;
+    let navLockTimer = 0;
     function placeInk(target) {
       if (target === lastInkTarget) return;
       lastInkTarget = target;
@@ -36,6 +38,18 @@
       link.addEventListener('pointerenter', () => { hoveredLink = link; placeInk(link); });
       link.addEventListener('focus', () => placeInk(link));
       link.addEventListener('blur', () => placeInk(activeLink));
+      link.addEventListener('click', () => {
+        navLockTarget = link;
+        clearTimeout(navLockTimer);
+        navLockTimer = setTimeout(() => { navLockTarget = null; updateHeader(); }, 850);
+        activeLink = link;
+        links.forEach(item => {
+          item.classList.toggle('is-current', item === link);
+          if (item === link) item.setAttribute('aria-current', 'location');
+          else item.removeAttribute('aria-current');
+        });
+        placeInk(link);
+      });
     });
     nav.addEventListener('pointerleave', () => { hoveredLink = null; placeInk(activeLink); });
 
@@ -48,10 +62,22 @@
       }
       const max = document.documentElement.scrollHeight - window.innerHeight;
       progress.style.transform = `scaleX(${max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0})`;
+      const triggerTop = (header.offsetHeight || 80) + 74;
       let current = null;
       sections.forEach((section, index) => {
-        if (section && section.getBoundingClientRect().top <= 150) current = links[index];
+        if (section && section.getBoundingClientRect().top <= triggerTop) current = links[index];
       });
+      if (max > 0 && window.scrollY >= max - 6 && links.length) {
+        current = links[links.length - 1];
+      }
+      if (navLockTarget) {
+        if (current === navLockTarget) {
+          navLockTarget = null;
+          clearTimeout(navLockTimer);
+        } else {
+          current = navLockTarget;
+        }
+      }
       if (current !== activeLink) {
         activeLink = current;
         links.forEach(link => {

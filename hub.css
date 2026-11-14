@@ -1,9 +1,15 @@
+@property --spot-a {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
 /* Cool Glacier & Midnight Glass Portal — distinctly separate from Qure's warm editorial style. */
 :root {
   color-scheme: light dark;
   --bg: #f3f6fc;
-  --bg-elevated: rgb(255 255 255 / 0.78);
-  --bg-elevated-strong: rgb(255 255 255 / 0.94);
+  --bg-elevated: rgb(255 255 255 / 0.86);
+  --bg-elevated-strong: rgb(255 255 255 / 0.96);
   --bg-subtle: rgb(232 238 249 / 0.72);
   --ink: #0f172a;
   --ink-2: #475569;
@@ -20,7 +26,8 @@
   --shadow-hover:
     0 4px 12px rgb(15 23 42 / 0.05),
     0 24px 54px rgb(53 99 242 / 0.12);
-  --spotlight: rgb(53 99 242 / 0.09);
+  --spot-rgb: 53 99 242;
+  --spot-max: 0.095;
   --grid-dot: rgb(15 23 42 / 0.08);
 
   --sans: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI Variable', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
@@ -37,8 +44,8 @@
 html[data-theme='dark'] {
   color-scheme: dark;
   --bg: #0b101b;
-  --bg-elevated: rgb(20 27 45 / 0.74);
-  --bg-elevated-strong: rgb(26 35 58 / 0.92);
+  --bg-elevated: rgb(20 27 45 / 0.86);
+  --bg-elevated-strong: rgb(26 35 58 / 0.95);
   --bg-subtle: rgb(30 41 68 / 0.68);
   --ink: #f1f5f9;
   --ink-2: #94a3b8;
@@ -55,7 +62,8 @@ html[data-theme='dark'] {
   --shadow-hover:
     0 6px 16px rgb(0 0 0 / 0.28),
     0 28px 60px rgb(56 189 248 / 0.14);
-  --spotlight: rgb(96 165 250 / 0.14);
+  --spot-rgb: 96 165 250;
+  --spot-max: 0.14;
   --grid-dot: rgb(255 255 255 / 0.07);
 }
 
@@ -213,7 +221,6 @@ button {
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   background: var(--bg-elevated);
-  backdrop-filter: blur(18px) saturate(140%);
   box-shadow: 0 2px 14px rgb(15 23 42 / 0.03);
   animation: spring-in 0.65s var(--spring) backwards;
 }
@@ -437,6 +444,7 @@ html[data-theme='dark'] .icon-moon {
 .bento-card {
   --mx: 50%;
   --my: 50%;
+  --spot-a: 0;
   grid-column: span 6;
   position: relative;
   display: flex;
@@ -446,11 +454,15 @@ html[data-theme='dark'] .icon-moon {
   padding: 26px;
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  background: var(--bg-elevated);
-  backdrop-filter: blur(18px) saturate(135%);
+  background-color: var(--bg-elevated);
+  background-image: radial-gradient(
+    360px circle at var(--mx) var(--my),
+    rgb(var(--spot-rgb) / var(--spot-a)),
+    transparent 65%
+  );
   box-shadow: var(--shadow-card);
-  overflow: hidden;
   transition:
+    --spot-a 0.3s ease,
     transform 0.45s var(--spring),
     border-color 0.25s ease,
     box-shadow 0.35s ease,
@@ -466,27 +478,16 @@ html[data-theme='dark'] .icon-moon {
   grid-column: span 5;
   border-style: dashed;
   border-color: var(--border-strong);
-  background: color-mix(in srgb, var(--bg-elevated) 68%, transparent);
+  background-color: color-mix(in srgb, var(--bg-elevated) 76%, transparent);
 }
 
-.bento-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: 0;
-  background: radial-gradient(360px circle at var(--mx) var(--my), var(--spotlight), transparent 65%);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-}
-
-.bento-card:hover::before {
-  opacity: 1;
+.bento-card:hover {
+  --spot-a: var(--spot-max);
 }
 
 .bento-card:not(.is-upcoming):hover {
   border-color: color-mix(in srgb, var(--accent) 34%, var(--border-strong));
-  background: var(--bg-elevated-strong);
+  background-color: var(--bg-elevated-strong);
   box-shadow: var(--shadow-hover);
   transform: translateY(-4px);
 }
