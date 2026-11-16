@@ -5,6 +5,7 @@
 const REPO = 'aaANDkk/Qure_Style_SVG';
 const BRANCH = 'main';
 const RAW = `https://raw.githubusercontent.com/${REPO}/${BRANCH}/`;
+const WORKER_TREE_URL = 'https://visit-counter.kyleqin0603.workers.dev/qure-tree';
 const INTERVAL = 5 * 60 * 1000;
 const PAGE_SIZE = 84;
 const $ = id => document.getElementById(id);
@@ -26,18 +27,26 @@ function makeIcon(path, revision = '') {
   const url = RAW + path.split('/').map(encodeURIComponent).join('/');
   return { path, name: match[2], label: labelCache.get(path), category: match[1].toLowerCase(), url, image: `${url}?v=${encodeURIComponent(revision)}` };
 }
-async function request(url) {
-  const response = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(18000) });
-  if (!response.ok) throw new Error(response.status === 403 || response.status === 429 ? qText('请求频率受限，请稍后重试。') : qText('图标源返回 {0}。', response.status));
-  return response.json();
+function request(url, timeout = 18000) {
+  return fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(timeout) }).then(response => {
+    if (!response.ok) throw new Error(response.status === 403 || response.status === 429 ? qText('请求频率受限，请稍后重试。') : qText('图标源返回 {0}。', response.status));
+    return response.json();
+  });
+}
+function parseTreeIcons(tree) {
+  if (!tree || tree.truncated || !Array.isArray(tree.tree)) throw new Error(qText('图标目录不完整。'));
+  const icons = tree.tree.filter(x => x.type === 'blob').map(x => makeIcon(x.path, x.sha)).filter(Boolean);
+  if (!icons.length) throw new Error(qText('图标目录为空。'));
+  return { icons, fallback: false };
 }
 async function getIcons() {
   try {
-    const tree = await request(`https://api.github.com/repos/${REPO}/git/trees/${BRANCH}?recursive=1`);
-    if (tree.truncated || !Array.isArray(tree.tree)) throw new Error(qText('图标目录不完整。'));
-    const icons = tree.tree.filter(x => x.type === 'blob').map(x => makeIcon(x.path, x.sha)).filter(Boolean);
-    if (!icons.length) throw new Error(qText('图标目录为空。'));
-    return { icons, fallback: false };
+    return parseTreeIcons(await request(WORKER_TREE_URL, 6000));
+  } catch {
+    /* Fall back to GitHub API when the Worker cache endpoint is unavailable. */
+  }
+  try {
+    return parseTreeIcons(await request(`https://api.github.com/repos/${REPO}/git/trees/${BRANCH}?recursive=1`));
   } catch (error) {
     // The public subscription manifest avoids GitHub API rate limits.
     const manifest = await request(`${RAW}Other/Qure-Style-SVG.json?t=${Date.now()}`);
