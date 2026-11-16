@@ -1,6 +1,6 @@
 'use strict';
 (() => {
-  const RAW_ICON = 'https://raw.githubusercontent.com/aaANDkk/Qure_Style_SVG/main/icon/svg/common/';
+  const RAW_ICON = 'https://fastly.jsdelivr.net/gh/aaANDkk/Qure_Style_SVG@main/icon/svg/common/';
 
   /**
    * 站点入口配置表：后续新增子项目网站时，只需在此数组追加一项即可自动生成卡片与底部路由。

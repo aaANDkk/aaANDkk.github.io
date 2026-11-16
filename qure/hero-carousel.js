@@ -12,7 +12,7 @@
   const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
   let cache=[],index=0,loading=false,held=false,signature='';
   let timer=0;
-  function source(name){return state.icons.find(icon=>icon.category==='common' && icon.name===name)?.image || `${RAW}icon/svg/common/${encodeURIComponent(name)}.svg`;}
+  function source(name){return state.icons.find(icon=>icon.category==='common' && icon.name===name)?.image || `${typeof CDN !== 'undefined' ? CDN : RAW}icon/svg/common/${encodeURIComponent(name)}.svg`;}
   function sourceSignature(){return names.map(name=>`${name}:${source(name)}`).join('|');}
   async function prepare(name){
     const response=await fetch(source(name),{cache:'force-cache',signal:AbortSignal.timeout(12000)});

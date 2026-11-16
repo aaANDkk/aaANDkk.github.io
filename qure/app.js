@@ -5,6 +5,7 @@
 const REPO = 'aaANDkk/Qure_Style_SVG';
 const BRANCH = 'main';
 const RAW = `https://raw.githubusercontent.com/${REPO}/${BRANCH}/`;
+const CDN = `https://fastly.jsdelivr.net/gh/${REPO}@${BRANCH}/`;
 const WORKER_TREE_URL = 'https://visit-counter.kyleqin0603.workers.dev/qure-tree';
 const INTERVAL = 5 * 60 * 1000;
 const PAGE_SIZE = 84;
@@ -24,8 +25,9 @@ function toast(message) {
 function makeIcon(path, revision = '') {
   const match = /^icon\/svg\/(common|flag)\/([^/]+)\.svg$/i.exec(path);
   if (!match) return null;
-  const url = RAW + path.split('/').map(encodeURIComponent).join('/');
-  return { path, name: match[2], label: labelCache.get(path), category: match[1].toLowerCase(), url, image: `${url}?v=${encodeURIComponent(revision)}` };
+  const encoded = path.split('/').map(encodeURIComponent).join('/');
+  const url = RAW + encoded;
+  return { path, name: match[2], label: labelCache.get(path), category: match[1].toLowerCase(), url, image: `${CDN}${encoded}?v=${encodeURIComponent(revision)}` };
 }
 function request(url, timeout = 18000) {
   return fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(timeout) }).then(response => {
@@ -139,7 +141,10 @@ function render() {
     if (!animate) card.style.animation = 'none';
     const open = document.createElement('button'); open.className = 'icon-open'; open.type = 'button'; open.setAttribute('aria-label', qText('放大查看 {0}', icon.name));
     const img = document.createElement('img'); img.src = icon.image; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.width = 57; img.height = 57;
-    img.onerror = () => { const failed = document.createElement('span'); failed.className = 'image-failed'; failed.textContent = qText('加载失败'); img.replaceWith(failed); };
+    img.onerror = () => {
+      if (!img.dataset.fallback && img.src !== icon.url) { img.dataset.fallback = '1'; img.src = icon.url; return; }
+      const failed = document.createElement('span'); failed.className = 'image-failed'; failed.textContent = qText('加载失败'); img.replaceWith(failed);
+    };
     const name = document.createElement('span'); name.className = 'icon-name'; name.textContent = icon.name.replace(/_/g,' '); name.title = icon.label ? `${icon.label} · ${icon.name}` : icon.name;
     open.append(img, name); open.onclick = () => showPreview(icon);
     card.append(open); fragment.append(card);
@@ -167,6 +172,7 @@ function showPreview(icon) {
   $('preview-image').alt = icon.label || icon.name;
   $('preview-image').hidden = false;
   $('preview-image-error').hidden = true;
+  delete $('preview-image').dataset.fallback;
   $('preview-image').src = icon.image;
   $('source-link').href = `https://github.com/${REPO}/blob/${BRANCH}/${icon.path.split('/').map(encodeURIComponent).join('/')}`;
   resetView();
@@ -306,7 +312,11 @@ $('zoom-in').onclick = () => zoomAt((Number($('zoom').value)||180)*1.2);
 $('zoom-out').onclick = () => zoomAt((Number($('zoom').value)||180)/1.2);
 $('close').onclick = () => $('preview').close();
 $('preview').addEventListener('click', event => { const rect = $('preview').getBoundingClientRect(); if (event.target === $('preview') && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom)) $('preview').close(); });
-$('preview-image').onerror = () => { $('preview-image').hidden = true; $('preview-image-error').hidden = false; };
+$('preview-image').onerror = () => {
+  const img = $('preview-image');
+  if (state.current && !img.dataset.fallback && img.src !== state.current.url) { img.dataset.fallback = '1'; img.src = state.current.url; return; }
+  img.hidden = true; $('preview-image-error').hidden = false;
+};
 $('preview-image').onload = () => { $('preview-image').hidden = false; $('preview-image-error').hidden = true; };
 $('copy').onclick = copyLink;
 $('try-icon').onclick = () => { if (state.current) { $('preview').close(); document.dispatchEvent(new CustomEvent('qure-try-icon',{detail:state.current.path})); } };
@@ -325,7 +335,7 @@ document.addEventListener('keydown', event => {
 document.addEventListener('keydown', event => { if (event.key === '/' && !$('preview').open && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && !event.ctrlKey && !event.metaKey) { event.preventDefault(); $('search').focus(); } });
 document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - state.synced >= INTERVAL) sync(); });
 setInterval(() => { if (!document.hidden) sync(); }, INTERVAL);
-document.querySelectorAll('[data-feature]').forEach(img => { img.src = `${RAW}icon/svg/${img.dataset.group || 'common'}/${encodeURIComponent(img.dataset.feature)}.svg`; });
+document.querySelectorAll('[data-feature]').forEach(img => { img.src = `${CDN}icon/svg/${img.dataset.group || 'common'}/${encodeURIComponent(img.dataset.feature)}.svg`; });
 sync();
 
 // Exhibition motion stays optional and never blocks browsing or data loading.
