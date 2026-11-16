@@ -39,7 +39,8 @@ function parseTreeIcons(tree) {
   if (!tree || tree.truncated || !Array.isArray(tree.tree)) throw new Error(qText('图标目录不完整。'));
   const icons = tree.tree.filter(x => x.type === 'blob').map(x => makeIcon(x.path, x.sha)).filter(Boolean);
   if (!icons.length) throw new Error(qText('图标目录为空。'));
-  return { icons, fallback: false };
+  const syncedAt = Number(tree.syncedAt);
+  return { icons, fallback: false, syncedAt: Number.isFinite(syncedAt) && syncedAt > 0 ? syncedAt : null };
 }
 async function getIcons() {
   try {
@@ -66,7 +67,6 @@ async function getIcons() {
 async function sync(manual = false) {
   if (state.busy) return;
   state.busy = true;
-  $('refresh').disabled = true;
   $('retry').disabled = true;
   $('sync-label').textContent = qText('正在同步…');
   if (!state.icons.length) {
@@ -80,7 +80,8 @@ async function sync(manual = false) {
     state.synced = Date.now();
     $('error').hidden = true;
     $('all-count').textContent = state.icons.length.toLocaleString();
-    $('sync-label').textContent = result.fallback ? qText('订阅清单 · 备用连接') : qText('已同步 {0}', new Date().toLocaleTimeString(window.QureI18n?.language === 'en' ? 'en-GB' : 'zh-CN', {hour:'2-digit',minute:'2-digit'}));
+    const syncTime = result.syncedAt ? new Date(result.syncedAt) : new Date();
+    $('sync-label').textContent = result.fallback ? qText('订阅清单 · 备用连接') : qText('已同步 {0}', syncTime.toLocaleTimeString(window.QureI18n?.language === 'en' ? 'en-GB' : 'zh-CN', {hour:'2-digit',minute:'2-digit'}));
     render();
     refreshFeatured();
     document.dispatchEvent(new Event('qure-icons-updated'));
@@ -99,7 +100,6 @@ async function sync(manual = false) {
   } finally {
     state.busy = false;
     $('grid').setAttribute('aria-busy', 'false');
-    $('refresh').disabled = false;
     $('retry').disabled = false;
   }
 }
@@ -302,7 +302,7 @@ document.querySelectorAll('[data-bg]').forEach(button => button.onclick = () => 
 });
 $('search').oninput = event => { state.query = event.target.value; state.limit = PAGE_SIZE; render(); };
 $('sort').onchange = event => { state.sort = event.target.value; render(); };
-$('refresh').onclick = $('retry').onclick = () => sync(true);
+$('retry').onclick = () => sync(true);
 $('more').onclick = () => { state.limit += PAGE_SIZE; render(); };
 $('reset').onclick = () => { state.query = ''; $('search').value = ''; if (state.category === 'all') render(); else document.querySelector('[data-category="all"]').click(); };
 $('zoom').oninput = () => { const value=Number($('zoom').value); if(value>=48 && value<=1024)setZoom(); };

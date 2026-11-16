@@ -848,6 +848,22 @@ html[lang='en'] .hero h1 em {
 }
 
 /* ---------- Section Headings & Scroll Reveal ---------- */
+.section-heading .live {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
+  border-left: 1px solid var(--line-strong);
+  padding-left: 14px;
+  flex-shrink: 0;
+}
+
+.section-heading .live i {
+  width: 6px;
+  height: 6px;
+  background: #6f9468;
+  box-shadow: 0 0 0 3px rgb(111 148 104 / 0.16);
+}
 .section-heading .eyebrow::before {
   content: '';
   width: 16px;
@@ -1623,7 +1639,7 @@ dialog::backdrop {
   .tabs button { font-size: 12.5px; }
   .tabs span { font-size: 11px; }
   .status-row, .grid-hint { font-size: 11.5px; color: var(--text-faint); }
-  .section-heading #refresh { font-size: 11.5px; }
+  .section-heading .live { font-size: 11px; }
   .collection .icon-name { font-size: 11.5px; color: var(--text-soft); }
   .more { font-size: 12.5px; }
 
@@ -1927,6 +1943,7 @@ dialog::backdrop {
   .collection .section-heading h2 { font-size: 22px; max-width: 220px; }
   .studio-intro { font-size: 12.5px; max-width: none; }
   .status-row { font-size: 10px; }
+  .section-heading .live { font-size: 10px; padding-left: 10px; }
   .collection .icon-name { font-size: 10px; color: var(--text-soft); }
   .strategy-text > span { font-size: 9.5px; }
   .clash-disclaimer { font-size: 9.5px; }

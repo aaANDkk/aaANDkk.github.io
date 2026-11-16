@@ -248,7 +248,8 @@
   "切换为英文": "Switch to English",
   "切换为中文": "Switch to Chinese",
   "次访问": "visits",
-  "Qure 站累计访问次数": "Total Qure visits"
+  "Qure 站累计访问次数": "Total Qure visits",
+  "后台图标数据同步时间": "Backend icon sync time"
 };
 
   const storageKey = 'qure-language';
