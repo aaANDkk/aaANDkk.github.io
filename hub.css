@@ -86,6 +86,7 @@ html[data-theme='dark'] {
   }
 
   .brand-badge,
+  .visit-badge,
   .ctrl-btn,
   .bento-card,
   .card-icon-wrap,
@@ -285,6 +286,76 @@ button {
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+}
+
+.visit-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--bg-subtle);
+  color: var(--ink-2);
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+  user-select: none;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    opacity 0.3s ease,
+    transform 0.4s var(--spring);
+}
+
+.visit-badge[hidden] {
+  display: none;
+}
+
+.visit-badge:hover {
+  background: var(--bg-elevated-strong);
+  border-color: var(--border-strong);
+}
+
+.visit-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.visit-count {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  transition: opacity 0.25s ease;
+}
+
+.visit-badge.is-loaded .visit-count {
+  animation: count-pop 0.45s var(--spring-pop);
+}
+
+.visit-label {
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+
+@keyframes count-pop {
+  from {
+    opacity: 0.4;
+    transform: translateY(2px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .ctrl-btn {
@@ -857,8 +928,19 @@ html[data-theme='dark'] .icon-moon {
     font-size: 8.5px;
   }
 
-  .ctrl-btn .ctrl-label {
+  .ctrl-btn .ctrl-label,
+  .visit-badge .visit-label {
     display: none;
+  }
+
+  .visit-badge {
+    height: 34px;
+    padding: 0 9px;
+    gap: 5px;
+  }
+
+  .visit-count {
+    font-size: 11.5px;
   }
 
   .ctrl-btn:not(.lang-btn) {

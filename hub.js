@@ -16,14 +16,14 @@
       status: { zh: '已上线', en: 'Live' },
       title: { zh: 'Qure 图标预览站', en: 'Qure Icon Showcase' },
       desc: {
-        zh: 'Qure 风格 SVG 矢量图标的在线预览网站。支持名称检索、细节放大查看、直链复制与 Clash 策略组试搭。',
-        en: 'Online preview site for Qure-style SVG icons. Search, inspect details, copy direct links, and preview Clash policy groups.'
+        zh: 'Qure 风格 SVG 矢量图标预览站。支持名称检索、放大查看、直链复制与 Clash 策略组预览。',
+        en: 'Web gallery for Qure-style SVG icons. Search by name, inspect vectors, copy links, and preview Clash policy groups.'
       },
       tags: {
-        zh: ['SVG 图标库', 'Clash 试搭', '在线同步'],
-        en: ['SVG Library', 'Clash Studio', 'Live Sync']
+        zh: ['SVG 图标库', 'Clash 预览', '在线同步'],
+        en: ['SVG Library', 'Clash Preview', 'Live Sync']
       },
-      cta: { zh: '进入预览', en: 'Open Preview' },
+      cta: { zh: '进入站点', en: 'Open Site' },
       repoUrl: 'https://github.com/aaANDkk/Qure_Style_SVG',
       repoLabel: { zh: '图标仓库', en: 'Icon Repo' },
       previewIcons: [
@@ -39,40 +39,44 @@
       href: 'https://github.com/aaANDkk',
       external: true,
       route: '/soon',
-      status: { zh: '敬请期待', en: 'Coming Soon' },
-      title: { zh: '更多创意即将上线', en: 'More Creations Coming' },
+      status: { zh: '待上线', en: 'Planned' },
+      title: { zh: '后续项目', en: 'Upcoming Projects' },
       desc: {
-        zh: '新的网页工具与小实验正在打磨中，准备好后会第一时间出现在这里。',
-        en: 'New web tools and interactive experiments are on the way and will appear right here once ready.'
+        zh: '新的网页工具与项目正在开发中，完成后会更新至此页面。',
+        en: 'Additional web tools and projects are in development and will be listed here once ready.'
       },
       tags: {
-        zh: ['创意实验', '持续更新'],
-        en: ['Experiments', 'In Progress']
+        zh: ['开发中', '待发布'],
+        en: ['In Progress', 'Upcoming']
       },
-      cta: { zh: '前往 GitHub 主页', en: 'Visit GitHub' }
+      cta: { zh: 'GitHub 主页', en: 'GitHub Profile' }
     }
   ];
 
   const UI_TEXT = {
     zh: {
-      pageTitle: 'aaANDkk · 站点入口',
+      pageTitle: 'aaANDkk · 项目索引',
       brandSub: 'PROJECT PORTAL',
-      pillTag: '作品索引',
-      heroTitleStart: '挑选一个站点，',
-      heroTitleAccent: '开始体验。',
-      heroDesc: '这里收录了持续更新的个人网页作品与实用工具，点击下方卡片即可进入。',
-      footText: '© aaANDkk · 用心打磨每一个小细节',
+      pillTag: '站点目录',
+      heroTitleStart: '个人项目与',
+      heroTitleAccent: '在线工具。',
+      heroDesc: '收录个人网页项目与实用工具，点击下方卡片即可访问。',
+      footText: '© aaANDkk',
+      visitUnit: '次访问',
+      visitTitle: '主站累计访问次数',
       langButton: 'EN',
       langAria: 'Switch to English'
     },
     en: {
-      pageTitle: 'aaANDkk · Project Portal',
+      pageTitle: 'aaANDkk · Project Index',
       brandSub: 'PROJECT PORTAL',
       pillTag: 'DIRECTORY',
-      heroTitleStart: 'Pick a project ',
-      heroTitleAccent: 'to explore.',
-      heroDesc: 'A curated collection of personal web tools and showcases. Choose a card below to jump in.',
-      footText: '© aaANDkk · Crafted with care',
+      heroTitleStart: 'Projects & ',
+      heroTitleAccent: 'web tools.',
+      heroDesc: 'A directory of personal web projects and utilities. Select a card below to open.',
+      footText: '© aaANDkk',
+      visitUnit: 'visits',
+      visitTitle: 'Total portal visits',
       langButton: '中',
       langAria: '切换到中文'
     }
@@ -88,6 +92,11 @@
   const footRoutes = document.getElementById('foot-routes');
   const themeBtn = document.getElementById('theme-toggle');
   const langBtn = document.getElementById('lang-toggle');
+  const visitBadge = document.getElementById('visit-badge');
+  const visitCountEl = document.getElementById('visit-count');
+  const VISIT_API = 'https://visit-counter.kyleqin0603.workers.dev/';
+  const VISIT_SITE = 'home';
+  let latestVisitCount = null;
   const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const finePointer = () => window.matchMedia?.('(hover: hover) and (pointer: fine)').matches;
 
@@ -273,9 +282,68 @@
       langBtn.lang = lang === 'zh' ? 'en' : 'zh-CN';
     }
 
+    if (visitBadge) {
+      const label = latestVisitCount !== null
+        ? `${dict.visitTitle}: ${latestVisitCount.toLocaleString()}`
+        : dict.visitTitle;
+      visitBadge.setAttribute('aria-label', label);
+      visitBadge.title = label;
+    }
+
     renderCards();
     renderFooterRoutes();
     writeStore('hub-lang', lang);
+  }
+
+  function renderVisitCount(count) {
+    if (!visitBadge || !visitCountEl) return;
+    latestVisitCount = Number(count);
+    if (!Number.isFinite(latestVisitCount)) return;
+    visitCountEl.textContent = latestVisitCount.toLocaleString();
+    visitBadge.hidden = false;
+    visitBadge.classList.add('is-loaded');
+    const title = UI_TEXT[lang]?.visitTitle || '';
+    const fullLabel = `${title}: ${latestVisitCount.toLocaleString()}`;
+    visitBadge.setAttribute('aria-label', fullLabel);
+    visitBadge.title = fullLabel;
+  }
+
+  async function syncVisitCount() {
+    if (!visitBadge || !visitCountEl) return;
+    const hitKey = `visit-recorded-${VISIT_SITE}`;
+    const cacheKey = `visit-cache-${VISIT_SITE}`;
+    let recorded = false;
+    try {
+      recorded = sessionStorage.getItem(hitKey) === '1';
+      const cached = sessionStorage.getItem(cacheKey);
+      if (cached !== null) renderVisitCount(Number(cached));
+    } catch {
+      /* Ignore sessionStorage restriction. */
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+    try {
+      const res = await fetch(`${VISIT_API}?site=${encodeURIComponent(VISIT_SITE)}`, {
+        method: recorded ? 'GET' : 'POST',
+        signal: controller.signal,
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (typeof data?.count === 'number') {
+        renderVisitCount(data.count);
+        try {
+          sessionStorage.setItem(hitKey, '1');
+          sessionStorage.setItem(cacheKey, String(data.count));
+        } catch {
+          /* Ignore sessionStorage restriction. */
+        }
+      }
+    } catch {
+      if (latestVisitCount === null) visitBadge.hidden = true;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   themeBtn?.addEventListener('click', () => applyTheme(theme === 'dark' ? 'light' : 'dark'));
@@ -283,4 +351,5 @@
 
   applyTheme(theme);
   applyLanguage(lang);
+  syncVisitCount();
 })();

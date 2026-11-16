@@ -59,7 +59,7 @@
       };
       fragment.append(row);
     });
-    if (!design.groups.length) { const empty = document.createElement('p'); empty.className = 'studio-no-groups'; empty.textContent = qText('你的画布已准备好。添加一个策略组，开始试搭。'); fragment.append(empty); }
+    if (!design.groups.length) { const empty = document.createElement('p'); empty.className = 'studio-no-groups'; empty.textContent = qText('当前暂无策略组，请先添加一个分组。'); fragment.append(empty); }
     el('group-list').replaceChildren(fragment);
     el('add-group').disabled = design.groups.length >= 100;
   }
@@ -110,7 +110,7 @@
   }
   function renderPending() {
     const icon = pendingPath && resolveIcon(pendingPath);
-    if (!icon) { el('pending-icon').textContent = qText('选择一枚图标'); el('apply-icon').disabled = true; return; }
+    if (!icon) { el('pending-icon').textContent = qText('选择图标'); el('apply-icon').disabled = true; return; }
     const name = document.createElement('span'); name.textContent = icon.name.replace(/_/g,' ');
     el('pending-icon').replaceChildren(iconImage(icon,32),name);
     el('apply-icon').disabled = false;
@@ -118,7 +118,7 @@
   function openIconPicker() {
     const group = design.groups[selected]; if (!group) return;
     pendingPath = group.path;
-    el('icon-dialog-description').textContent = qText('正在为 {0} 挑选图标。选好后点击应用，确认这次搭配。', group.name);
+    el('icon-dialog-description').textContent = qText('正在为 {0} 选择图标，选中后点击应用即可生效。', group.name);
     renderPicker(); renderPending();
     el('icon-dialog').showModal();
     el('picker-search').focus({preventScroll:true});
@@ -179,7 +179,7 @@
   el('reset-design').onclick = () => el('studio-confirm').showModal();
   el('cancel-reset').onclick = () => el('studio-confirm').close();
   el('confirm-reset').onclick = () => { design.groups = defaults(); selected = 0; page = 0; save(); renderGroups(); renderEditor(); el('studio-confirm').close(); toast(qText('已恢复预设策略组。')); };
-  document.addEventListener('qure-language-changed', () => { renderGroups(); renderEditor(); renderPending(); if(el('icon-dialog').open && design.groups[selected]) el('icon-dialog-description').textContent=qText('正在为 {0} 挑选图标。选好后点击应用，确认这次搭配。', design.groups[selected].name); });
+  document.addEventListener('qure-language-changed', () => { renderGroups(); renderEditor(); renderPending(); if(el('icon-dialog').open && design.groups[selected]) el('icon-dialog-description').textContent=qText('正在为 {0} 选择图标，选中后点击应用即可生效。', design.groups[selected].name); });
   document.addEventListener('qure-icons-updated', () => { renderGroups(); renderEditor(); });
   document.addEventListener('qure-try-icon', event => {
     useIcon(event.detail);

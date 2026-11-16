@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#f3f6fc" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0b101b" media="(prefers-color-scheme: dark)">
-  <meta name="description" content="aaANDkk 的个人作品与网页项目导航。探索 Qure 风格图标预览站及更多即将上线的小工具。">
-  <title>aaANDkk · 站点入口</title>
+  <meta name="description" content="aaANDkk 的个人项目与在线工具导航。">
+  <title>aaANDkk · 项目索引</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%233b66f5'/%3E%3Cstop offset='100%25' stop-color='%230ea5e9'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='18' fill='url(%23g)'/%3E%3Cpath d='M21 44L32 19L43 44M25.5 36H38.5' fill='none' stroke='%23fff' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" type="image/svg+xml">
   <link rel="stylesheet" href="hub.css">
   <script src="hub.js" defer></script>
@@ -30,6 +30,15 @@
       </a>
 
       <div class="hub-controls">
+        <div id="visit-badge" class="visit-badge" aria-label="主站累计访问次数" title="主站累计访问次数">
+          <svg class="visit-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/>
+            <circle cx="12" cy="12" r="2.8"/>
+          </svg>
+          <span id="visit-count" class="visit-count">—</span>
+          <span class="visit-label" data-i18n="visitUnit">次访问</span>
+        </div>
+
         <a class="ctrl-btn" href="https://github.com/aaANDkk" target="_blank" rel="noopener noreferrer" aria-label="GitHub 主页" title="GitHub">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M9 19c-4 1-4-2-6-2m12 5v-4a3.5 3.5 0 0 0-1-3c3-.4 6-1.5 6-6a4.6 4.6 0 0 0-1-3c.1-1 .1-2-.4-3 0 0-1.2-.4-3.6 1a13 13 0 0 0-6 0C6.6 2.6 5.4 3 5.4 3 5 4 4.9 5 5 6a4.6 4.6 0 0 0-1 3c0 4.5 3 5.6 6 6a3.5 3.5 0 0 0-1 3v4"/>
@@ -57,11 +66,11 @@
           <span class="live-dot" aria-hidden="true"></span>
           <span>aaandkk.github.io</span>
           <span class="pill-sep" aria-hidden="true">/</span>
-          <span data-i18n="pillTag">目录索引</span>
+          <span data-i18n="pillTag">站点目录</span>
         </div>
 
-        <h1 data-i18n="heroTitle">挑选一个站点，<span>开始体验。</span></h1>
-        <p class="hero-desc" data-i18n="heroDesc">这里收录了持续更新的个人网页作品与实用工具，点击下方卡片即可进入。</p>
+        <h1 data-i18n="heroTitle">个人项目与<span>在线工具。</span></h1>
+        <p class="hero-desc" data-i18n="heroDesc">收录个人网页项目与实用工具，点击下方卡片即可访问。</p>
       </section>
 
       <section aria-label="项目入口列表" class="bento-section">
@@ -71,7 +80,7 @@
 
     <footer class="hub-foot">
       <div class="foot-left">
-        <span data-i18n="footText">© aaANDkk · 用心打磨每一个小细节</span>
+        <span data-i18n="footText">© aaANDkk</span>
       </div>
       <div class="foot-routes" id="foot-routes"></div>
     </footer>

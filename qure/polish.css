@@ -64,6 +64,7 @@
   .topbar nav,
   .topbar nav > a,
   .topbar .nav-github,
+  .visit-badge,
   .language-toggle,
   .nav-ink,
   .brand > img,
@@ -362,6 +363,74 @@ kbd,
 .language-toggle:active {
   transform: scale(0.94);
   transition-duration: 0.12s;
+}
+
+.visit-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  min-height: 38px;
+  padding: 0 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--surface-elevated) 65%, transparent);
+  color: var(--ink-2);
+  font-size: 11.5px;
+  line-height: 1;
+  white-space: nowrap;
+  flex-shrink: 0;
+  user-select: none;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s, transform 0.45s var(--spring);
+}
+
+.visit-badge[hidden] {
+  display: none;
+}
+
+.visit-badge:hover {
+  background: var(--raise);
+  border-color: transparent;
+  color: var(--ink);
+}
+
+.visit-icon {
+  display: block;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.85;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.visit-count {
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+
+.visit-badge.is-loaded .visit-count {
+  animation: visit-pop 0.45s var(--spring-pop);
+}
+
+.visit-label {
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+@keyframes visit-pop {
+  from {
+    opacity: 0.4;
+    transform: translateY(2px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .reading-progress {
@@ -1642,6 +1711,17 @@ dialog::backdrop {
   .icon-dialog .picker-item span { font-size: 10px; }
 }
 
+@media (max-width: 860px) {
+  .visit-badge {
+    padding: 0 9px;
+    gap: 5px;
+  }
+
+  .visit-badge .visit-label {
+    display: none;
+  }
+}
+
 @media (min-width: 601px) and (max-width: 800px) {
   .topbar-right {
     gap: 6px;
@@ -1737,6 +1817,14 @@ dialog::backdrop {
     border-radius: var(--r-sm);
     font-size: 11.5px;
     font-weight: 600;
+  }
+
+  .visit-badge {
+    height: 36px;
+    min-height: 36px;
+    padding: 0 9px;
+    border-radius: var(--r-sm);
+    font-size: 11.5px;
   }
 
   .topbar nav {
@@ -1858,6 +1946,13 @@ dialog::backdrop {
     min-height: 35px;
     margin-left: 0;
     padding: 0 8px;
+  }
+
+  .visit-badge {
+    height: 35px;
+    min-height: 35px;
+    padding: 0 8px;
+    font-size: 11px;
   }
 }
 
