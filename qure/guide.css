@@ -1,0 +1,71 @@
+/* Shared navigation geometry; the moving ink owns the only selected background. */
+.topbar nav{gap:5px;align-items:center}
+.topbar nav>a:not(.nav-github){height:40px;min-height:40px;padding:0 15px;border:1px solid transparent;border-radius:9px;background:transparent;box-shadow:none;color:#94846e;font-size:11px;line-height:1;gap:0}
+.topbar nav>a:not(.nav-github):hover,.topbar nav>a.is-current{color:#59472f;background:transparent}
+.topbar .nav-ink{background:#e9dfcc;border:1px solid #dfd0b6;box-shadow:inset 0 1px #fff7}
+.topbar .nav-github{height:38px;min-height:38px;padding:0 12px;gap:8px;border:1px solid #302f28;background:#302f28;color:#fffaf0;box-shadow:none;transition:background .2s,border-color .2s,color .2s}
+.topbar .nav-github:hover{background:#4b463b;border-color:#4b463b;color:#fffaf0;transform:none}
+.topbar .nav-github .nav-arrow{display:none}
+#showcase-selected-name{text-align:center}
+/* A quiet reading surface: an index at left, instructions at right. */
+.usage-guide{padding:48px 0 64px;border-top:1px solid #dcd0b970;scroll-margin-top:100px}
+.usage-guide>.section-heading{margin-bottom:28px}
+.guide-layout{display:grid;grid-template-columns:245px minmax(0,1fr);border:1px solid #ded5c5;border-radius:18px;background:#fcf9f2;overflow:hidden}
+.guide-intro{padding:30px 18px;background:#f0eade;border-right:1px solid #ded5c5;min-width:0}
+.guide-index-label{display:block;padding:0 14px;font:10px ui-monospace,Consolas,monospace;letter-spacing:1.8px;color:#a47556;margin-bottom:14px}
+.guide-intro>p{font-size:12px;line-height:1.9;color:#8d8271;margin:0 14px 28px}
+.guide-nav{position:relative;isolation:isolate;display:grid;gap:8px}
+.guide-ink{position:absolute;top:0;left:0;z-index:-1;background:#fcf9f2;border:1px solid #e0d5c4;border-radius:10px;box-shadow:0 3px 10px #55412705;pointer-events:none;transition:transform .48s cubic-bezier(.22,1,.36,1),width .35s,height .35s}
+.guide-nav button{position:relative;display:flex;align-items:center;gap:12px;text-align:left;min-width:0;padding:18px 14px;border:0;border-radius:10px;background:transparent;color:#8d8271;transition:color .25s}
+.guide-nav button>span:first-child{font:11px ui-monospace,Consolas,monospace;color:#b0a18a;transition:color .25s}
+.guide-nav button strong{display:block;font-size:13px;font-weight:500;margin-bottom:5px}
+.guide-nav button small{font-size:10px;color:#a19481}
+.guide-nav button>span:last-child{margin-left:auto;font-size:16px;opacity:0;transition:translate .35s,opacity .25s}
+.guide-nav button[aria-selected='true']{color:#493d30}
+.guide-nav button[aria-selected='true']>span:first-child{color:#b66c49}
+.guide-nav button[aria-selected='true']>span:last-child{opacity:1}
+.guide-nav button:hover{color:#694b33}.guide-nav button:hover>span:last-child{translate:2px 0}
+.guide-paper{position:relative;min-width:0;padding:38px 40px;overflow:hidden}
+.guide-panel{min-height:455px;min-width:0;max-width:760px;margin-inline:auto}
+.guide-panel:focus-visible{outline-offset:8px}
+.guide-kicker{display:inline-flex;align-items:center;gap:9px;font:9px ui-monospace,Consolas,monospace;letter-spacing:1.2px;color:#aa7655}
+.guide-kicker:before{content:'';width:5px;height:5px;background:#bc7955;border-radius:50%}
+.guide-panel h3{font:400 28px/1.5 var(--serif);color:#463d32;margin:12px 0 9px;letter-spacing:-.6px}
+.guide-panel p{font-size:12px;line-height:1.9;color:#8b7f6d;margin:9px 0}
+.guide-steps{padding:0;list-style:none;counter-reset:guide;display:grid;gap:0;margin:26px 0}
+.guide-steps li{position:relative;counter-increment:guide;display:grid;grid-template-columns:24px minmax(0,1fr);gap:14px;padding-bottom:20px;font-size:12px;line-height:1.9;color:#817563}
+.guide-steps li:last-child{padding-bottom:0}
+.guide-steps li:before{content:counter(guide);position:relative;z-index:1;display:grid;place-items:center;width:24px;height:24px;border:1px solid #dbcfbb;border-radius:50%;background:#fcf9f2;font:10px ui-monospace,Consolas,monospace;color:#a27350}
+.guide-steps li:not(:last-child):after{content:'';position:absolute;left:11px;top:28px;bottom:4px;width:1px;background:#e4dbcc}
+.guide-steps strong{display:block;color:#5c5142;font-weight:500;margin-bottom:3px}
+.guide-snippet{border:1px solid #ded4c3;border-radius:10px;background:#f3eee4;overflow:hidden;margin:25px 0 18px;transition:border-color .25s}
+.guide-snippet:hover{border-color:#be9b79}
+.guide-snippet-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 15px;border-bottom:1px solid #e2d9cb;font:9px ui-monospace,monospace;letter-spacing:.5px;color:#968772}
+.guide-copy{flex-shrink:0;font:11px 'Segoe UI',sans-serif;letter-spacing:0;color:#fffaf2;background:#a76040;border:1px solid #a76040;padding:8px 12px;border-radius:6px;min-width:82px;transition:background .2s,border-color .2s}
+.guide-copy:hover{background:#8d4b30;border-color:#8d4b30}.guide-copy:active{transform:scale(.97)}
+.guide-copy.is-copied{background:#62734e;border-color:#62734e;color:#fffaf2}
+.guide-snippet pre{margin:0;padding:17px;font:11px/1.9 ui-monospace,Consolas,monospace;color:#74614b;white-space:pre-wrap;overflow-wrap:anywhere}
+.guide-panel .guide-note{padding:0 0 0 12px;border-left:2px solid #ddc8ab;font-size:11px;line-height:1.85;color:#9a8a73;margin-top:18px}
+.guide-source{display:inline-flex;align-items:center;gap:15px;color:#94704e;font-size:11px;margin-top:22px}.guide-source span{transition:translate .3s}.guide-source:hover span{translate:3px -3px}
+@media(max-width:1000px){.guide-layout{grid-template-columns:210px minmax(0,1fr)}.guide-intro{padding:28px 12px}.guide-paper{padding:32px 27px}.guide-panel h3{font-size:25px}}
+@media(max-width:800px){
+  .topbar nav>a:not(.nav-github){padding:0 11px;font-size:10px}
+  .guide-layout{grid-template-columns:minmax(0,1fr)}.guide-intro{border-right:0;border-bottom:1px solid #ded5c5;padding:20px}
+  .guide-index-label{display:none}.guide-intro>p{margin:0 3px 17px}.guide-intro>p br{display:none}
+  .guide-nav{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}.guide-nav button{padding:14px 10px;justify-content:center;gap:9px}.guide-nav button small,.guide-nav button>span:last-child{display:none}.guide-nav button strong{margin:0;font-size:12px}
+  .guide-panel{min-height:440px}
+}
+@media(max-width:560px){
+  .topbar nav{gap:2px}.topbar nav>a:not(.nav-github){font-size:10px;height:36px;min-height:36px;padding:0 8px}
+  .topbar .nav-github{width:34px;height:34px;min-height:34px;padding:0;gap:0;margin-left:3px;border-radius:9px}
+  .topbar .nav-github>span{display:none}.topbar .nav-github svg{display:block;width:17px;height:17px}
+  .topbar .brand{gap:5px}.topbar .brand-word{font-size:28px}.topbar .brand>img{width:23px;height:27px}
+  .usage-guide{padding:32px 0 42px}.usage-guide>.section-heading{margin-bottom:20px}
+  .guide-layout{border-radius:13px}.guide-intro{padding:18px 12px 12px}.guide-intro>p{font-size:11px;margin:0 6px 16px;line-height:1.8}
+  .guide-nav{gap:2px}.guide-nav button{padding:13px 6px;gap:6px}.guide-nav button strong{font-size:11px}.guide-nav button>span:first-child{font-size:9px}.guide-ink{border-radius:7px}
+  .guide-paper{padding:25px 20px}.guide-panel{min-height:510px}.guide-kicker{font-size:8px;letter-spacing:.6px}.guide-panel h3{font-size:23px;line-height:1.5;margin:12px 0 10px}
+  .guide-panel p,.guide-steps li{font-size:12px}.guide-steps{margin:24px 0}.guide-steps li{gap:11px;padding-bottom:21px}.guide-steps li:last-child{padding-bottom:0}
+  .guide-snippet pre{font-size:10px;padding:14px}.guide-snippet-head{padding:10px 12px;font-size:8px}.guide-source{font-size:10px}
+}
+@media(max-width:360px){.topbar nav>a:not(.nav-github){padding:0 6px;font-size:9px}.topbar .brand-word{font-size:25px}.topbar .brand{gap:3px}.guide-nav button{gap:4px;padding-inline:3px}.guide-nav button strong{font-size:10px}.guide-paper{padding:23px 16px}.guide-panel h3{font-size:21px}}
+@media(prefers-reduced-motion:reduce){.guide-ink,.guide-nav button,.guide-nav button>span,.guide-copy,.guide-snippet,.guide-source span{transition:none!important}}
