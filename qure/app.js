@@ -9,12 +9,54 @@ const CDN = `https://fastly.jsdelivr.net/gh/${REPO}@${BRANCH}/`;
 const WORKER_TREE_URL = 'https://visit-counter.kyleqin0603.workers.dev/qure-tree';
 const INTERVAL = 5 * 60 * 1000;
 const PAGE_SIZE = 84;
+const CACHE_STATE_KEY = 'qure-refresh-cache-v1';
+const CACHE_BUST_TTL = 12 * 60 * 60 * 1000;
 const $ = id => document.getElementById(id);
 const state = { icons: [], category: 'all', query: '', sort: 'az', limit: PAGE_SIZE, current: null, busy: false, synced: 0, cacheBust: 0 };
 let toastTimer;
 let firstGridRender = true;
 const labelCache = new Map();
 const view = { x: 0, y: 0, pointers: new Map() };
+let dataVersion = 0;
+let labelVersion = 0;
+let cachedFilterKey = '';
+let cachedFiltered = [];
+let renderedKey = '';
+let renderedCount = 0;
+
+function treeSignature(icons) {
+  let hash = 2166136261;
+  for (const icon of icons) {
+    const token = `${icon.path}:${icon.sha || ''}`;
+    for (let i = 0; i < token.length; i++) {
+      hash ^= token.charCodeAt(i);
+      hash = Math.imul(hash, 16777619);
+    }
+  }
+  return `${icons.length}:${(hash >>> 0).toString(36)}`;
+}
+function readRefreshCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_STATE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed.bustAt !== 'number' || Date.now() - parsed.bustAt > CACHE_BUST_TTL) return null;
+    return parsed;
+  } catch { return null; }
+}
+function writeRefreshCache(bustAt, icons, staleSig = '') {
+  if (!bustAt || !icons.length) return;
+  const compact = icons.map(icon => [icon.path, icon.sha || '']);
+  const labels = labelCache.size ? [...labelCache.entries()] : undefined;
+  try {
+    localStorage.setItem(CACHE_STATE_KEY, JSON.stringify({ bustAt, staleSig, icons: compact, labels }));
+  } catch {
+    try { localStorage.setItem(CACHE_STATE_KEY, JSON.stringify({ bustAt, staleSig, icons: compact })); }
+    catch {
+      try { localStorage.setItem(CACHE_STATE_KEY, JSON.stringify({ bustAt, staleSig })); } catch {}
+    }
+  }
+}
 
 function toast(message) {
   $('toast').textContent = message;
@@ -30,7 +72,7 @@ function makeIcon(path, revision = '') {
   const image = state.cacheBust
     ? `${RAW}${encoded}?v=${encodeURIComponent(revision)}&t=${state.cacheBust}`
     : `${CDN}${encoded}?v=${encodeURIComponent(revision)}`;
-  return { path, name: match[2], label: labelCache.get(path), category: match[1].toLowerCase(), url, image };
+  return { path, sha: revision, name: match[2], label: labelCache.get(path), category: match[1].toLowerCase(), url, image };
 }
 function request(url, timeout = 18000) {
   return fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(timeout) }).then(response => {
@@ -45,16 +87,22 @@ function parseTreeIcons(tree) {
   const syncedAt = Number(tree.syncedAt);
   return { icons, fallback: false, syncedAt: Number.isFinite(syncedAt) && syncedAt > 0 ? syncedAt : null };
 }
-async function getIcons(bustCache = false) {
+async function getIcons(bustCache = false, persisted = null) {
   const githubTreeUrl = `https://api.github.com/repos/${REPO}/git/trees/${BRANCH}?recursive=1`;
-  if (bustCache) {
+  const preferDirect = bustCache || Boolean(persisted?.bustAt);
+  if (preferDirect) {
     try {
       return parseTreeIcons(await request(githubTreeUrl, 12000));
     } catch {
       /* Fall back to Worker cache or manifest when GitHub API is rate-limited or unreachable. */
     }
     try {
-      return parseTreeIcons(await request(`${WORKER_TREE_URL}?t=${Date.now()}`, 6000));
+      const workerResult = parseTreeIcons(await request(`${WORKER_TREE_URL}?t=${Date.now()}`, 6000));
+      if (persisted?.staleSig && persisted.icons?.length && treeSignature(workerResult.icons) === persisted.staleSig) {
+        const cached = persisted.icons.map(([path, sha]) => makeIcon(path, sha)).filter(Boolean);
+        if (cached.length) return { icons: cached, fallback: false, syncedAt: persisted.bustAt };
+      }
+      return workerResult;
     } catch {
       /* Continue to subscription manifest fallback. */
     }
@@ -100,28 +148,55 @@ async function sync(manual = false, bustCache = false) {
   }
   $('retry').disabled = true;
   $('sync-label').textContent = bustCache ? qText('正在刷新缓存…') : qText('正在同步…');
-  if (!state.icons.length) {
-    $('status').textContent = qText('正在获取最新图标…');
-    $('grid').replaceChildren(...Array.from({length: 21}, () => { const item = document.createElement('div'); item.className = 'skeleton'; return item; }));
-  }
-  $('grid').setAttribute('aria-busy', 'true');
+  const persisted = bustCache ? null : readRefreshCache();
   const previousBust = state.cacheBust;
+  const previousSig = state.icons.length ? treeSignature(state.icons) : '';
   if (bustCache) {
     state.cacheBust = Date.now();
     labelsLoaded = false;
     labelCache.clear();
     await clearBrowserCaches();
+  } else if (persisted?.bustAt) {
+    state.cacheBust = persisted.bustAt;
+    if (Array.isArray(persisted.labels)) {
+      for (const [path, label] of persisted.labels) {
+        if (!labelCache.has(path)) labelCache.set(path, label);
+      }
+    }
+    if (!state.icons.length && Array.isArray(persisted.icons) && persisted.icons.length) {
+      const hydrated = persisted.icons.map(([path, sha]) => makeIcon(path, sha)).filter(Boolean);
+      if (hydrated.length) {
+        state.icons = hydrated;
+        dataVersion++;
+        $('all-count').textContent = state.icons.length.toLocaleString();
+        render();
+        refreshFeatured(true);
+      }
+    }
   }
+  if (!state.icons.length) {
+    $('status').textContent = qText('正在获取最新图标…');
+    $('grid').replaceChildren(...Array.from({length: 21}, () => { const item = document.createElement('div'); item.className = 'skeleton'; return item; }));
+  }
+  $('grid').setAttribute('aria-busy', 'true');
   try {
-    const result = await getIcons(bustCache);
+    const result = await getIcons(bustCache, persisted);
     state.icons = [...new Map(result.icons.map(icon => [icon.path, icon])).values()];
+    dataVersion++;
     state.synced = Date.now();
+    if (state.cacheBust) {
+      const nextSig = treeSignature(state.icons);
+      const staleSig = bustCache
+        ? (previousSig && previousSig !== nextSig ? previousSig : readRefreshCache()?.staleSig || '')
+        : (persisted?.staleSig || '');
+      writeRefreshCache(state.cacheBust, state.icons, staleSig);
+    }
     $('error').hidden = true;
     $('all-count').textContent = state.icons.length.toLocaleString();
     const syncTime = result.syncedAt ? new Date(result.syncedAt) : new Date();
     $('sync-label').textContent = result.fallback ? qText('订阅清单 · 备用连接') : qText('已同步 {0}', syncTime.toLocaleTimeString(window.QureI18n?.language === 'en' ? 'en-GB' : 'zh-CN', {hour:'2-digit',minute:'2-digit'}));
     render();
-    refreshFeatured(bustCache);
+    refreshFeatured(bustCache || Boolean(state.cacheBust));
     document.dispatchEvent(new Event('qure-icons-updated'));
     loadLabels(bustCache);
     if (state.current) {
@@ -149,19 +224,27 @@ async function sync(manual = false, bustCache = false) {
     $('retry').disabled = false;
   }
 }
+function currentFilterKey() {
+  return `${dataVersion}|${state.category}|${state.query}|${state.sort}|${state.query.trim() ? labelVersion : 0}`;
+}
 function filtered() {
+  const key = currentFilterKey();
+  if (key === cachedFilterKey) return cachedFiltered;
   const words = state.query.trim().toLowerCase().split(/\s+/).filter(Boolean);
-  return state.icons.filter(icon =>
+  cachedFiltered = state.icons.filter(icon =>
     (state.category === 'all' || icon.category === state.category) &&
     words.every(word => `${icon.name} ${icon.label || ''} ${icon.category === 'flag' ? '旗帜 地区 国家' : '品牌 服务'}`.toLowerCase().includes(word))
   ).sort((a,b) => (state.sort === 'za' ? -1 : 1) * a.name.localeCompare(b.name, 'en', {numeric:true}));
+  cachedFilterKey = key;
+  return cachedFiltered;
 }
 let labelsLoaded = false;
 async function loadLabels(bustCache = false) {
   if (labelsLoaded && !bustCache) return;
-  const suffix = bustCache ? `?t=${state.cacheBust || Date.now()}` : '';
+  const bust = bustCache || Boolean(state.cacheBust);
+  const suffix = bust ? `?t=${state.cacheBust || Date.now()}` : '';
   const results = await Promise.allSettled(['common', 'flag'].map(async category => {
-    const response = await fetch(`${RAW}icon/svg/${category}/README.md${suffix}`, {cache: bustCache ? 'no-store' : 'no-cache', signal:AbortSignal.timeout(12000)});
+    const response = await fetch(`${RAW}icon/svg/${category}/README.md${suffix}`, {cache: bust ? 'no-store' : 'no-cache', signal:AbortSignal.timeout(12000)});
     if (!response.ok) throw new Error(qText('名称索引不可用'));
     const text = await response.text();
     const labels = new Map();
@@ -175,28 +258,50 @@ async function loadLabels(bustCache = false) {
     for (const [path, label] of result.value) labelCache.set(path, label);
     for (const icon of state.icons) icon.label = result.value.get(icon.path) || icon.label;
   }
+  labelVersion++;
+  if (state.cacheBust && state.icons.length) {
+    const existing = readRefreshCache();
+    writeRefreshCache(state.cacheBust, state.icons, existing?.staleSig || '');
+  }
   if (state.query) render();
   document.dispatchEvent(new Event('qure-icons-updated'));
 }
-function render() {
+function createIconCard(icon, index, animate) {
+  const card = document.createElement('article'); card.className = 'icon-card';
+  if (animate) card.style.animationDelay = `${Math.min(index % PAGE_SIZE, 20) * 16}ms`;
+  else card.style.animation = 'none';
+  const open = document.createElement('button'); open.className = 'icon-open'; open.type = 'button'; open.setAttribute('aria-label', qText('放大查看 {0}', icon.name));
+  const img = document.createElement('img'); img.src = icon.image; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.width = 57; img.height = 57;
+  img.onerror = () => {
+    if (!img.dataset.fallback && img.src !== icon.url) { img.dataset.fallback = '1'; img.src = icon.url; return; }
+    const failed = document.createElement('span'); failed.className = 'image-failed'; failed.textContent = qText('加载失败'); img.replaceWith(failed);
+  };
+  const name = document.createElement('span'); name.className = 'icon-name'; name.textContent = icon.name.replace(/_/g,' '); name.title = icon.label ? `${icon.label} · ${icon.name}` : icon.name;
+  open.append(img, name); open.onclick = () => showPreview(icon);
+  card.append(open);
+  return card;
+}
+function render(appendOnly = false) {
   const animate = firstGridRender;
   firstGridRender = false;
   const icons = filtered();
-  const fragment = document.createDocumentFragment();
-  for (const [index, icon] of icons.slice(0, state.limit).entries()) {
-    const card = document.createElement('article'); card.className = 'icon-card'; card.style.animationDelay = `${Math.min(index % PAGE_SIZE, 20) * 16}ms`;
-    if (!animate) card.style.animation = 'none';
-    const open = document.createElement('button'); open.className = 'icon-open'; open.type = 'button'; open.setAttribute('aria-label', qText('放大查看 {0}', icon.name));
-    const img = document.createElement('img'); img.src = icon.image; img.alt = ''; img.loading = 'lazy'; img.decoding = 'async'; img.width = 57; img.height = 57;
-    img.onerror = () => {
-      if (!img.dataset.fallback && img.src !== icon.url) { img.dataset.fallback = '1'; img.src = icon.url; return; }
-      const failed = document.createElement('span'); failed.className = 'image-failed'; failed.textContent = qText('加载失败'); img.replaceWith(failed);
-    };
-    const name = document.createElement('span'); name.className = 'icon-name'; name.textContent = icon.name.replace(/_/g,' '); name.title = icon.label ? `${icon.label} · ${icon.name}` : icon.name;
-    open.append(img, name); open.onclick = () => showPreview(icon);
-    card.append(open); fragment.append(card);
+  const visible = icons.slice(0, state.limit);
+  const grid = $('grid');
+  const canAppend = appendOnly && renderedKey === cachedFilterKey && renderedCount > 0 && renderedCount <= visible.length && grid.children.length === renderedCount;
+  if (canAppend) {
+    if (visible.length > renderedCount) {
+      const fragment = document.createDocumentFragment();
+      for (let i = renderedCount; i < visible.length; i++) fragment.append(createIconCard(visible[i], i, false));
+      grid.append(fragment);
+      renderedCount = visible.length;
+    }
+  } else {
+    const fragment = document.createDocumentFragment();
+    for (let i = 0; i < visible.length; i++) fragment.append(createIconCard(visible[i], i, animate));
+    grid.replaceChildren(fragment);
+    renderedKey = cachedFilterKey;
+    renderedCount = visible.length;
   }
-  $('grid').replaceChildren(fragment);
   $('empty').hidden = Boolean(icons.length) || !state.icons.length;
   $('more').hidden = icons.length <= state.limit;
   $('status').textContent = qText('找到 {0} 枚图标{1}', icons.length.toLocaleString(), icons.length > state.limit ? qText(' · 已展示 {0} 枚', state.limit) : '');
@@ -351,7 +456,7 @@ $('search').oninput = event => { state.query = event.target.value; state.limit =
 $('sort').onchange = event => { state.sort = event.target.value; render(); };
 $('retry').onclick = () => sync(true);
 if ($('refresh-cache')) $('refresh-cache').onclick = () => sync(true, true);
-$('more').onclick = () => { state.limit += PAGE_SIZE; render(); };
+$('more').onclick = () => { state.limit += PAGE_SIZE; render(true); };
 $('reset').onclick = () => { state.query = ''; $('search').value = ''; if (state.category === 'all') render(); else document.querySelector('[data-category="all"]').click(); };
 $('zoom').oninput = () => { const value=Number($('zoom').value); if(value>=48 && value<=1024)setZoom(); };
 $('zoom').onchange = setZoom;
@@ -382,7 +487,11 @@ document.addEventListener('keydown', event => {
 document.addEventListener('keydown', event => { if (event.key === '/' && !$('preview').open && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && !event.ctrlKey && !event.metaKey) { event.preventDefault(); $('search').focus(); } });
 document.addEventListener('visibilitychange', () => { if (!document.hidden && Date.now() - state.synced >= INTERVAL) sync(); });
 setInterval(() => { if (!document.hidden) sync(); }, INTERVAL);
-document.querySelectorAll('[data-feature]').forEach(img => { img.src = `${CDN}icon/svg/${img.dataset.group || 'common'}/${encodeURIComponent(img.dataset.feature)}.svg`; });
+const bootBust = readRefreshCache()?.bustAt;
+document.querySelectorAll('[data-feature]').forEach(img => {
+  const encoded = `icon/svg/${img.dataset.group || 'common'}/${encodeURIComponent(img.dataset.feature)}.svg`;
+  img.src = bootBust ? `${RAW}${encoded}?t=${bootBust}` : `${CDN}${encoded}`;
+});
 sync();
 
 // Exhibition motion stays optional and never blocks browsing or data loading.

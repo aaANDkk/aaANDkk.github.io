@@ -6,8 +6,8 @@ const path = require('node:path');
 class Element {
   constructor() { this.children=[]; this.dataset={}; this.style={}; this.hidden=false; this.value=''; this.attributes={}; this.listeners={}; this.classList={add(){},remove(){},toggle(){}}; }
   setAttribute(k,v){this.attributes[k]=v;}
-  append(...children){this.children.push(...children);}
-  replaceChildren(...children){this.children=children;}
+  append(...children){for(const c of children)if(c?.isFragment)this.children.push(...c.children);else this.children.push(c);}
+  replaceChildren(...children){this.children=[];this.append(...children);}
   querySelector(){return new Element();}
   querySelectorAll(selector){const result=[];const visit=node=>{for(const child of node.children||[]){if(selector==='button' && child.tagName==='BUTTON')result.push(child);visit(child);}};visit(this);return result;}
   addEventListener(type,handler){(this.listeners[type] ||= []).push(handler);}
@@ -26,7 +26,7 @@ const elements = new Map();
 const document = {
   getElementById(id){if(!elements.has(id))elements.set(id,new Element());return elements.get(id);},
   querySelectorAll(){return [];},createElement(tag){const element=new Element();element.tagName=tag.toUpperCase();return element;},
-  createDocumentFragment(){return new Element();},listeners:{},body:new Element(),
+  createDocumentFragment(){const fragment=new Element();fragment.isFragment=true;return fragment;},listeners:{},body:new Element(),
   addEventListener(type,handler){(this.listeners[type] ||= []).push(handler);},
   dispatchEvent(event){for(const handler of this.listeners[event.type]||[])handler(event);},hidden:false
 };
@@ -53,7 +53,7 @@ const run = expression=>vm.runInContext(expression,sandbox);
   assert.equal(run('state.icons.length'),4,'exclude non-icon SVGs');
   assert.equal(run('state.icons[0].image.includes("abc123")'),true,'version SVG requests by content SHA');
   run('state.query="claude"'); assert.equal(run('filtered().length'),1);
-  run('render()');assert.equal(document.getElementById('grid').children[0].children[0].style.animation,'none','filtering must not replay card entrance motion');
+  run('render()');assert.equal(document.getElementById('grid').children[0].style.animation,'none','filtering must not replay card entrance motion');
   run('state.query="日本"'); assert.equal(run('filtered()[0].name'),'Japan');
   run('state.query="";state.category="flag"'); assert.equal(run('filtered().length'),2);
   run('state.category="all";state.sort="za"'); assert.equal(run('filtered()[0].name'),'United_States');
@@ -93,6 +93,66 @@ const run = expression=>vm.runInContext(expression,sandbox);
   assert.equal(run('state.icons[0].image.includes("raw.githubusercontent.com") && state.icons[0].image.includes("&t=")'),true,'refresh cache bypasses CDN cache with timestamped raw URLs');
   assert.equal(document.getElementById('refresh-cache').disabled,false,'refresh cache button re-enables after completion');
   failAll=true;await run('sync()');assert.equal(run('state.icons.length'),4,'failed refresh preserves loaded icons');assert.equal(document.getElementById('error').hidden,false);
+  failAll=false;
+
+  // Verify incremental #more append keeps existing card nodes untouched.
+  const bulk=Array.from({length:120},(_,i)=>({path:`icon/svg/common/Icon${i}.svg`,type:'blob',sha:`sha${i}`}));
+  const bulkElements=new Map();
+  const bulkDocument={
+    getElementById(id){if(!bulkElements.has(id))bulkElements.set(id,new Element());return bulkElements.get(id);},
+    querySelectorAll(){return [];},createElement(tag){const e=new Element();e.tagName=tag.toUpperCase();return e;},
+    createDocumentFragment(){const f=new Element();f.isFragment=true;return f;},listeners:{},body:new Element(),
+    addEventListener(type,fn){(this.listeners[type] ||= []).push(fn);},dispatchEvent(){},hidden:false
+  };
+  let workerStale=true;
+  const bulkSandbox={
+    window:{scrollX:0,scrollY:0,scrollTo(){}},requestAnimationFrame:cb=>cb(),document:bulkDocument,
+    localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},
+    setInterval(){},setTimeout(){},clearTimeout(){},console,URL,AbortSignal,Event,CustomEvent,Blob,
+    fetch:async url=>{
+      if(url.includes('README.md'))return {ok:true,text:async()=>''};
+      if(url.includes('qure-tree'))return {ok:true,json:async()=>({syncedAt:100,tree:fixtures.map(p=>({path:p,type:'blob',sha:'old'}))})};
+      if(url.includes('api.github.com'))return {ok:true,json:async()=>({tree:workerStale?fixtures.map(p=>({path:p,type:'blob',sha:'old'})):bulk})};
+      return {ok:true,json:async()=>({icons:[]})};
+    }
+  };
+  vm.createContext(bulkSandbox);
+  vm.runInContext(fs.readFileSync(path.join(__dirname,'../app.js'),'utf8'),bulkSandbox);
+  for(let i=0;i<20;i++)await Promise.resolve();
+  workerStale=false;
+  bulkDocument.getElementById('refresh-cache').click();
+  for(let i=0;i<30;i++)await Promise.resolve();
+  const gridEl=bulkDocument.getElementById('grid');
+  assert.equal(gridEl.children.length,84,'initial page shows PAGE_SIZE cards');
+  const firstCardRef=gridEl.children[0];
+  bulkDocument.getElementById('more').click();
+  assert.equal(gridEl.children.length,120,'load more appends remaining icons');
+  assert.equal(gridEl.children[0],firstCardRef,'load more preserves existing card DOM nodes');
+
+  // Reopen in a new session sharing localStorage; even if GitHub fails and Worker returns stale cache, keep refreshed icons & cacheBust.
+  const reloadElements=new Map();
+  const reloadDocument={
+    getElementById(id){if(!reloadElements.has(id))reloadElements.set(id,new Element());return reloadElements.get(id);},
+    querySelectorAll(){return [];},createElement(tag){const e=new Element();e.tagName=tag.toUpperCase();return e;},
+    createDocumentFragment(){const f=new Element();f.isFragment=true;return f;},listeners:{},body:new Element(),
+    addEventListener(type,fn){(this.listeners[type] ||= []).push(fn);},dispatchEvent(){},hidden:false
+  };
+  const reloadSandbox={
+    window:{scrollX:0,scrollY:0,scrollTo(){}},requestAnimationFrame:cb=>cb(),document:reloadDocument,
+    localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},
+    setInterval(){},setTimeout(){},clearTimeout(){},console,URL,AbortSignal,Event,CustomEvent,Blob,
+    fetch:async url=>{
+      if(url.includes('README.md'))return {ok:true,text:async()=>''};
+      if(url.includes('qure-tree'))return {ok:true,json:async()=>({syncedAt:100,tree:fixtures.map(p=>({path:p,type:'blob',sha:'old'}))})};
+      if(url.includes('api.github.com'))throw new Error('rate limit');
+      return {ok:true,json:async()=>({icons:[]})};
+    }
+  };
+  vm.createContext(reloadSandbox);
+  vm.runInContext(fs.readFileSync(path.join(__dirname,'../app.js'),'utf8'),reloadSandbox);
+  for(let i=0;i<30;i++)await Promise.resolve();
+  assert.equal(vm.runInContext('state.icons.length',reloadSandbox),120,'reopening preserves refreshed icon count over stale Worker cache');
+  assert.equal(vm.runInContext('state.cacheBust > 0 && state.icons[0].image.includes("&t=")',reloadSandbox),true,'reopening preserves cache-busting raw URLs');
   assert.equal(run('makeIcon("docs/test.svg")'),null);
   const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
   assert.ok(!fs.existsSync(path.join(__dirname,'../playground.js')),'playground script removed');
